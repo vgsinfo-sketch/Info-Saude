@@ -344,6 +344,7 @@ export default function UserDashboard() {
       
       setSuccess('Informações atualizadas com sucesso!');
       setShowSuccessModal(true);
+      console.log('Success modal triggered');
     } catch (err: any) {
       console.error('Erro ao atualizar:', err);
       setError('Erro ao atualizar informações: ' + (err.message || 'Tente novamente.'));
@@ -901,7 +902,7 @@ export default function UserDashboard() {
 
       {/* Success Modal */}
       {showSuccessModal && (
-        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in duration-500">
+        <div className="fixed inset-0 bg-slate-900/90 backdrop-blur-xl flex items-center justify-center z-[9999] p-4 animate-in fade-in duration-500">
           <div className="bg-white rounded-[2.5rem] w-full max-w-sm shadow-2xl overflow-hidden animate-in zoom-in-95 duration-500 border border-slate-100">
             <div className="bg-brand-gradient h-24 flex items-center justify-center text-white">
               <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/30">

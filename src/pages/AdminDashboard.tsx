@@ -458,6 +458,7 @@ export default function AdminDashboard() {
       
       setSuccessMessage('Usuário criado com sucesso!');
       setIsSuccessModalOpen(true);
+      console.log('Admin success modal triggered (create)');
       setIsModalOpen(false);
       setFormData({ 
         nome_completo: '', 
@@ -550,6 +551,7 @@ export default function AdminDashboard() {
       
       setSuccessMessage('Cadastro atualizado com sucesso!');
       setIsSuccessModalOpen(true);
+      console.log('Admin success modal triggered');
       setIsEditModalOpen(false);
     } catch (err: any) {
       console.error(err);
@@ -667,79 +669,81 @@ export default function AdminDashboard() {
       </style>
       <div className="space-y-8 pb-12">
         {/* Actions Bar */}
-        <div className="flex flex-col md:flex-row gap-3 justify-between items-center bg-white p-4 rounded-[2rem] shadow-lg shadow-slate-100 border border-slate-100">
-          <div className="relative w-full md:w-[25rem]">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+        <div className="flex flex-col md:flex-row gap-2 justify-between items-center bg-white p-3 rounded-[1.5rem] shadow-lg shadow-slate-100 border border-slate-100">
+          <div className="relative w-full md:w-[20rem]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
             <input
               type="text"
-              placeholder="Buscar por nome, CPF ou ID..."
+              placeholder="Buscar..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-12 pr-4 py-2.5 rounded-xl border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all text-sm font-medium"
+              className="w-full pl-10 pr-3 py-2 rounded-lg border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all text-xs font-medium"
             />
           </div>
-          <button
-            onClick={() => {
-              if (auth.currentUser) {
-                signOut(auth).then(() => navigate('/login'));
-              } else {
-                window.location.href = '/#/login';
-              }
-            }}
-            className="w-full md:w-auto bg-slate-100 text-slate-600 px-4 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-slate-200 transition-all text-xs uppercase tracking-widest italic font-display"
-          >
-            <ArrowLeft size={16} /> Sair
-          </button>
-          <button
-            onClick={handleRefresh}
-            className="w-full md:w-auto bg-slate-100 text-slate-600 px-4 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-slate-200 transition-all text-xs uppercase tracking-widest italic font-display"
-          >
-            <CheckCircle2 size={16} /> Atualizar
-          </button>
-          <button
-            onClick={handleExportData}
-            className="w-full md:w-auto bg-slate-100 text-slate-600 px-4 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-slate-200 transition-all text-xs uppercase tracking-widest italic font-display"
-            title="Criar Ponto de Restauração (Backup)"
-          >
-            <Download size={16} /> Backup
-          </button>
-          <label className="w-full md:w-auto bg-slate-100 text-slate-600 px-4 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-slate-200 transition-all text-xs uppercase tracking-widest italic font-display cursor-pointer">
-            <Upload size={16} /> Restaurar
-            <input type="file" accept=".json" onChange={handleFileImport} className="hidden" />
-          </label>
-          <button
-            onClick={() => setIsSeedModalOpen(true)}
-            className="w-full md:w-auto bg-amber-50 text-amber-700 px-4 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-amber-100 transition-all text-xs uppercase tracking-widest italic font-display border border-amber-200"
-          >
-            <Plus size={16} /> Teste
-          </button>
-          <button
-            onClick={() => {
-              setFormData({ 
-                nome_completo: '', 
-                cpf: '', 
-                id: '', 
-                role: 'user',
-                plano_saude_nome: '',
-                plano_saude_numero: '',
-                plano_saude_tipo: '',
-                data_nascimento: '',
-                sexo: ''
-              });
-              setIsModalOpen(true);
-            }}
-            className="w-full md:w-auto bg-brand-gradient hover:opacity-90 text-white px-6 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg shadow-blue-100 text-sm italic font-display uppercase tracking-tighter"
-          >
-            <Plus size={18} /> Novo Cadastro
-          </button>
-          {auth.currentUser && (
+          <div className="flex flex-wrap gap-2 w-full md:w-auto justify-end">
             <button
-              onClick={() => setIsSecurityModalOpen(true)}
-              className="w-full md:w-auto bg-slate-100 text-slate-600 px-4 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-slate-200 transition-all text-xs uppercase tracking-widest italic font-display"
+              onClick={() => {
+                if (auth.currentUser) {
+                  signOut(auth).then(() => navigate('/login'));
+                } else {
+                  window.location.href = '/#/login';
+                }
+              }}
+              className="bg-slate-100 text-slate-600 px-3 py-2 rounded-lg font-bold flex items-center justify-center gap-1.5 hover:bg-slate-200 transition-all text-[10px] uppercase tracking-widest italic font-display"
             >
-              <Lock size={16} /> Segurança
+              <ArrowLeft size={14} /> Sair
             </button>
-          )}
+            <button
+              onClick={handleRefresh}
+              className="bg-slate-100 text-slate-600 px-3 py-2 rounded-lg font-bold flex items-center justify-center gap-1.5 hover:bg-slate-200 transition-all text-[10px] uppercase tracking-widest italic font-display"
+            >
+              <CheckCircle2 size={14} /> Atualizar
+            </button>
+            <button
+              onClick={handleExportData}
+              className="bg-slate-100 text-slate-600 px-3 py-2 rounded-lg font-bold flex items-center justify-center gap-1.5 hover:bg-slate-200 transition-all text-[10px] uppercase tracking-widest italic font-display"
+              title="Backup"
+            >
+              <Download size={14} /> Backup
+            </button>
+            <label className="bg-slate-100 text-slate-600 px-3 py-2 rounded-lg font-bold flex items-center justify-center gap-1.5 hover:bg-slate-200 transition-all text-[10px] uppercase tracking-widest italic font-display cursor-pointer">
+              <Upload size={14} /> Restaurar
+              <input type="file" accept=".json" onChange={handleFileImport} className="hidden" />
+            </label>
+            <button
+              onClick={() => setIsSeedModalOpen(true)}
+              className="bg-amber-50 text-amber-700 px-3 py-2 rounded-lg font-bold flex items-center justify-center gap-1.5 hover:bg-amber-100 transition-all text-[10px] uppercase tracking-widest italic font-display border border-amber-200"
+            >
+              <Plus size={14} /> Teste
+            </button>
+            <button
+              onClick={() => {
+                setFormData({ 
+                  nome_completo: '', 
+                  cpf: '', 
+                  id: '', 
+                  role: 'user',
+                  plano_saude_nome: '',
+                  plano_saude_numero: '',
+                  plano_saude_tipo: '',
+                  data_nascimento: '',
+                  sexo: ''
+                });
+                setIsModalOpen(true);
+              }}
+              className="bg-brand-gradient hover:opacity-90 text-white px-4 py-2 rounded-lg font-bold flex items-center justify-center gap-1.5 transition-all active:scale-95 shadow-lg shadow-blue-100 text-xs italic font-display uppercase tracking-tighter"
+            >
+              <Plus size={16} /> Novo Cadastro
+            </button>
+            {auth.currentUser && (
+              <button
+                onClick={() => setIsSecurityModalOpen(true)}
+                className="bg-slate-100 text-slate-600 px-3 py-2 rounded-lg font-bold flex items-center justify-center gap-1.5 hover:bg-slate-200 transition-all text-[10px] uppercase tracking-widest italic font-display"
+              >
+                <Lock size={14} /> Segurança
+              </button>
+            )}
+          </div>
         </div>
 
         {success && (
@@ -789,9 +793,9 @@ export default function AdminDashboard() {
                 ) : (
                   filteredUsuarios.map((u) => (
                     <tr key={u.uid} className="hover:bg-slate-50/50 transition-colors group">
-                      <td className="px-6 py-3.5">
+                      <td className="px-4 py-2">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-brand-blue/10 text-brand-blue rounded-xl flex items-center justify-center font-black text-lg italic font-display overflow-hidden">
+                          <div className="w-10 h-10 bg-brand-blue/10 text-brand-blue rounded-xl flex items-center justify-center font-black text-lg italic font-display overflow-hidden shrink-0">
                             {u.foto ? (
                               <img src={u.foto} alt={u.nome_completo} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                             ) : (
@@ -799,36 +803,36 @@ export default function AdminDashboard() {
                             )}
                           </div>
                           <div>
-                            <div className="font-bold text-slate-900 text-sm tracking-tight">{u.nome_completo}</div>
-                            <div className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+                            <div className="font-bold text-slate-900 text-xs tracking-tight">{u.nome_completo}</div>
+                            <div className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">
                               {u.role === 'admin' ? 'Administrador' : 'Usuário'}
                             </div>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-3.5">
-                        <div className="text-slate-600 font-bold text-sm">{u.cpf}</div>
-                        <div className="text-[10px] text-brand-blue font-black uppercase tracking-tighter italic font-display">{u.id}</div>
+                      <td className="px-4 py-2">
+                        <div className="text-slate-600 font-bold text-xs">{u.cpf}</div>
+                        <div className="text-[9px] text-brand-blue font-black uppercase tracking-tighter italic font-display">{u.id}</div>
                       </td>
-                      <td className="px-6 py-3.5">
+                      <td className="px-4 py-2">
                         <div className="flex items-center gap-2">
                           <button 
                             onClick={() => openPublicLink(u.id)}
-                            className="text-[10px] bg-brand-blue/5 text-brand-blue px-2.5 py-1 rounded-lg hover:bg-brand-blue/10 transition-colors font-black uppercase tracking-tighter italic font-display flex items-center gap-1"
+                            className="text-[9px] bg-brand-blue/5 text-brand-blue px-2 py-0.5 rounded-lg hover:bg-brand-blue/10 transition-colors font-black uppercase tracking-tighter italic font-display flex items-center gap-1"
                           >
-                            <ExternalLink size={12} /> Ver Link
+                            <ExternalLink size={10} /> Link
                           </button>
                           <button 
                             onClick={() => copyToClipboard(getPublicUrl(u.id))}
-                            className="p-1.5 text-slate-300 hover:text-brand-blue transition-colors rounded-lg hover:bg-brand-blue/5"
+                            className="p-1 text-slate-300 hover:text-brand-blue transition-colors rounded-lg hover:bg-brand-blue/5"
                             title="Copiar Link"
                           >
-                            <Copy size={16} />
+                            <Copy size={14} />
                           </button>
                         </div>
                       </td>
-                      <td className="px-6 py-3.5">
-                        <div className="flex items-center justify-center gap-2">
+                      <td className="px-4 py-2">
+                        <div className="flex items-center justify-center gap-1">
                           <button 
                             onClick={() => {
                               setSelectedUser(u);
@@ -844,24 +848,24 @@ export default function AdminDashboard() {
                               });
                               setIsEditModalOpen(true);
                             }}
-                            className="p-2 text-slate-400 hover:text-brand-blue hover:bg-brand-blue/5 rounded-xl transition-all" title="Editar Cadastro">
-                            <Edit2 size={18} />
+                            className="p-1.5 text-slate-400 hover:text-brand-blue hover:bg-brand-blue/5 rounded-lg transition-all" title="Editar">
+                            <Edit2 size={16} />
                           </button>
                           <button 
                             onClick={() => {
                               setSelectedUser(u);
                               setIsDetailsModalOpen(true);
                             }}
-                            className="p-3 text-slate-400 hover:text-brand-green hover:bg-brand-green/5 rounded-2xl transition-all" title="Ver Detalhes">
-                            <Eye size={22} />
+                            className="p-1.5 text-slate-400 hover:text-brand-green hover:bg-brand-green/5 rounded-lg transition-all" title="Detalhes">
+                            <Eye size={16} />
                           </button>
                           <button 
                             onClick={() => {
                               setSelectedUser(u);
                               setIsQrModalOpen(true);
                             }}
-                            className="p-3 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-2xl transition-all" title="Ver QR Code">
-                            <QrCode size={22} />
+                            className="p-1.5 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-all" title="QR Code">
+                            <QrCode size={16} />
                           </button>
                           <button 
                             onClick={() => {
@@ -878,13 +882,13 @@ export default function AdminDashboard() {
                               link.click();
                               document.body.removeChild(link);
                             }}
-                            className="p-3 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-2xl transition-all" title="Imprimir Ficha">
-                            <Printer size={22} />
+                            className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all" title="Imprimir">
+                            <Printer size={16} />
                           </button>
                           <button 
                             onClick={() => handleDeleteUser(u.uid)}
-                            className="p-3 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-2xl transition-all" title="Excluir">
-                            <Trash2 size={22} />
+                            className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all" title="Excluir">
+                            <Trash2 size={16} />
                           </button>
                         </div>
                       </td>
@@ -968,25 +972,25 @@ export default function AdminDashboard() {
       {isDeleteModalOpen && (
         <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md flex items-center justify-center z-[60] p-4 animate-in fade-in duration-300">
           <div className="bg-white rounded-[2rem] w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 border border-slate-100">
-            <div className="p-8 text-center">
-              <div className="w-16 h-16 bg-red-50 text-red-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                <Trash2 size={32} />
+            <div className="p-6 text-center">
+              <div className="w-12 h-12 bg-red-50 text-red-600 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <Trash2 size={24} />
               </div>
-              <h3 className="text-xl font-black text-slate-900 mb-2 tracking-tight uppercase italic font-display">Confirmar Exclusão</h3>
-              <p className="text-slate-500 mb-8 font-medium">
-                Tem certeza que deseja excluir este usuário? Esta ação não pode ser desfeita e todos os dados de saúde serão perdidos.
+              <h3 className="text-lg font-black text-slate-900 mb-1 tracking-tight uppercase italic font-display">Confirmar Exclusão</h3>
+              <p className="text-slate-500 mb-6 font-medium text-sm">
+                Tem certeza que deseja excluir este usuário? Esta ação não pode ser desfeita.
               </p>
-              <div className="flex gap-4">
+              <div className="flex gap-3">
                 <button
                   onClick={() => setIsDeleteModalOpen(false)}
-                  className="flex-1 px-6 py-3 rounded-xl border-2 border-slate-100 font-bold text-slate-400 hover:bg-slate-50 transition-all uppercase tracking-widest italic font-display text-sm"
+                  className="flex-1 px-4 py-2 rounded-lg border-2 border-slate-100 font-bold text-slate-400 hover:bg-slate-50 transition-all uppercase tracking-widest italic font-display text-[10px]"
                 >
                   Cancelar
                 </button>
                 <button
                   onClick={confirmDeleteUser}
                   disabled={loading}
-                  className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-red-100 uppercase tracking-widest italic font-display text-sm disabled:opacity-50"
+                  className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded-lg transition-all shadow-lg shadow-red-100 uppercase tracking-widest italic font-display text-[10px] disabled:opacity-50"
                 >
                   {loading ? 'Excluindo...' : 'Excluir'}
                 </button>
@@ -1006,11 +1010,11 @@ export default function AdminDashboard() {
                 <X size={20} />
               </button>
             </div>
-            <form onSubmit={handleCreateUser} className="p-5 sm:p-8 space-y-4 sm:space-y-5 overflow-y-auto">
+            <form onSubmit={handleCreateUser} className="p-4 sm:p-6 space-y-3 sm:space-y-4 overflow-y-auto">
               {/* Foto de Perfil */}
-              <div className="flex flex-col items-center gap-4 py-4 border-b border-slate-50">
+              <div className="flex flex-col items-center gap-2 py-2 border-b border-slate-50">
                 <div className="relative group">
-                  <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-white shadow-xl bg-slate-100 flex items-center justify-center">
+                  <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-white shadow-xl bg-slate-100 flex items-center justify-center">
                     {formData.foto ? (
                       <img 
                         src={formData.foto} 
@@ -1019,11 +1023,11 @@ export default function AdminDashboard() {
                         referrerPolicy="no-referrer"
                       />
                     ) : (
-                      <User size={32} className="text-slate-300" />
+                      <User size={28} className="text-slate-300" />
                     )}
                   </div>
-                  <label className="absolute bottom-0 right-0 p-2 bg-brand-blue text-white rounded-full shadow-lg cursor-pointer hover:bg-blue-700 transition-all active:scale-90">
-                    <Camera size={14} />
+                  <label className="absolute bottom-0 right-0 p-1.5 bg-brand-blue text-white rounded-full shadow-lg cursor-pointer hover:bg-blue-700 transition-all active:scale-90">
+                    <Camera size={12} />
                     <input 
                       type="file" 
                       accept="image/*" 
@@ -1038,57 +1042,57 @@ export default function AdminDashboard() {
                     />
                   </label>
                 </div>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Foto de Perfil (Opcional)</p>
+                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Foto de Perfil (Opcional)</p>
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Nome Completo *</label>
+                <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-1">Nome Completo *</label>
                 <input
                   type="text"
                   value={formData.nome_completo}
                   onChange={(e) => setFormData({...formData, nome_completo: e.target.value})}
-                  className="w-full px-4 py-3 rounded-xl border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all text-base font-medium"
+                  className="w-full px-3 py-2 rounded-lg border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all text-sm font-medium"
                   required
                 />
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1">CPF *</label>
+                  <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-1">CPF *</label>
                   <input
                     type="text"
                     value={formData.cpf}
                     onChange={(e) => setFormData({...formData, cpf: e.target.value})}
                     placeholder="000.000.000-00"
-                    className="w-full px-4 py-3 rounded-xl border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all text-sm font-medium"
+                    className="w-full px-3 py-2 rounded-lg border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all text-xs font-medium"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Número de Identificação *</label>
+                  <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-1">Número de Identificação *</label>
                   <input
                     type="text"
                     value={formData.id}
                     onChange={(e) => setFormData({...formData, id: e.target.value})}
                     placeholder="Ex: INFO-001"
-                    className="w-full px-4 py-3 rounded-xl border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all text-sm font-bold italic font-display"
+                    className="w-full px-3 py-2 rounded-lg border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all text-xs font-bold italic font-display"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Data de Nascimento</label>
+                  <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-1">Data de Nascimento</label>
                   <input
                     type="date"
                     value={formData.data_nascimento || ''}
                     onChange={(e) => setFormData({...formData, data_nascimento: e.target.value})}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all text-sm font-medium"
+                    className="w-full px-3 py-2 rounded-lg border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all text-xs font-medium"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Sexo</label>
+                  <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-1">Sexo</label>
                   <select
                     value={formData.sexo || ''}
                     onChange={(e) => setFormData({...formData, sexo: e.target.value})}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all font-medium text-sm appearance-none cursor-pointer"
+                    className="w-full px-3 py-2 rounded-lg border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all font-medium text-xs appearance-none cursor-pointer"
                   >
                     <option value="">Selecione...</option>
                     <option value="Masculino">Masculino</option>
@@ -1098,20 +1102,20 @@ export default function AdminDashboard() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Cartão SUS</label>
+                  <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-1">Cartão SUS</label>
                   <input
                     type="text"
                     value={formData.cartao_sus || ''}
                     onChange={(e) => setFormData({...formData, cartao_sus: e.target.value})}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all text-sm font-medium"
+                    className="w-full px-3 py-2 rounded-lg border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all text-xs font-medium"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Tipo Sanguíneo</label>
+                  <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-1">Tipo Sanguíneo</label>
                   <select
                     value={formData.tipo_sanguineo || ''}
                     onChange={(e) => setFormData({...formData, tipo_sanguineo: e.target.value})}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all font-bold text-base appearance-none cursor-pointer"
+                    className="w-full px-3 py-2 rounded-lg border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all font-bold text-sm appearance-none cursor-pointer"
                   >
                     <option value="">Selecione...</option>
                     {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map(t => (
@@ -1120,106 +1124,106 @@ export default function AdminDashboard() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Telefone</label>
+                  <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-1">Telefone</label>
                   <input
                     type="text"
                     value={formData.telefone || ''}
                     onChange={(e) => setFormData({...formData, telefone: e.target.value})}
                     placeholder="(00) 00000-0000"
-                    className="w-full px-4 py-3 rounded-xl border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all text-sm font-medium"
+                    className="w-full px-3 py-2 rounded-lg border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all text-xs font-medium"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Última Vacina</label>
+                  <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-1">Última Vacina</label>
                   <input
                     type="text"
                     value={formData.ultima_vacina || ''}
                     onChange={(e) => setFormData({...formData, ultima_vacina: e.target.value})}
                     placeholder="Ex: Gripe - 10/2023"
-                    className="w-full px-4 py-3 rounded-xl border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all text-sm font-medium"
+                    className="w-full px-3 py-2 rounded-lg border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all text-xs font-medium"
                   />
                 </div>
-                <div className="col-span-1 sm:col-span-2 pt-2 border-t border-slate-100">
-                  <h4 className="text-[10px] font-black text-brand-blue uppercase tracking-[0.2em] mb-4 italic font-display">Plano de Saúde</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="col-span-1 sm:col-span-2 pt-1 border-t border-slate-100">
+                  <h4 className="text-[9px] font-black text-brand-blue uppercase tracking-[0.2em] mb-2 italic font-display">Plano de Saúde</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <div>
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Operadora</label>
+                      <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-1">Operadora</label>
                       <input
                         type="text"
                         value={formData.plano_saude_nome || ''}
                         onChange={(e) => setFormData({...formData, plano_saude_nome: e.target.value})}
-                        placeholder="Ex: Unimed, Bradesco..."
-                        className="w-full px-4 py-3 rounded-xl border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all text-sm font-medium"
+                        placeholder="Ex: Unimed..."
+                        className="w-full px-3 py-2 rounded-lg border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all text-xs font-medium"
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Nº do Cartão</label>
+                      <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-1">Nº do Cartão</label>
                       <input
                         type="text"
                         value={formData.plano_saude_numero || ''}
                         onChange={(e) => setFormData({...formData, plano_saude_numero: e.target.value})}
-                        placeholder="0000 0000 0000 0000"
-                        className="w-full px-4 py-3 rounded-xl border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all text-sm font-medium"
+                        placeholder="0000..."
+                        className="w-full px-3 py-2 rounded-lg border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all text-xs font-medium"
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Tipo do Plano</label>
+                      <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-1">Tipo do Plano</label>
                       <textarea
                         value={formData.plano_saude_tipo || ''}
                         onChange={(e) => setFormData({...formData, plano_saude_tipo: e.target.value})}
-                        placeholder="Ex: Enfermaria, Apartamento..."
-                        className="w-full px-4 py-3 rounded-xl border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all text-sm font-medium h-20 resize-none"
+                        placeholder="Ex: Enfermaria..."
+                        className="w-full px-3 py-2 rounded-lg border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all text-xs font-medium h-12 resize-none"
                       />
                     </div>
                   </div>
                 </div>
                 <div className="col-span-1 sm:col-span-2">
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Contatos de Emergência</label>
+                  <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-1">Contatos de Emergência</label>
                   <textarea
                     value={formData.contatos_emergencia || ''}
                     onChange={(e) => setFormData({...formData, contatos_emergencia: e.target.value})}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all h-20 resize-none text-sm font-medium"
-                    placeholder="Nome e Telefone de pessoas próximas..."
+                    className="w-full px-3 py-2 rounded-lg border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all h-16 resize-none text-xs font-medium"
+                    placeholder="Nome e Telefone..."
                   />
                 </div>
                 <div className="col-span-1 sm:col-span-2">
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Condições Preexistentes</label>
+                  <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-1">Condições Preexistentes</label>
                   <textarea
                     value={formData.condicoes_preexistentes || ''}
                     onChange={(e) => setFormData({...formData, condicoes_preexistentes: e.target.value})}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all h-20 resize-none text-sm font-medium"
-                    placeholder="Ex: Diabetes, Hipertensão..."
+                    className="w-full px-3 py-2 rounded-lg border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all h-16 resize-none text-xs font-medium"
+                    placeholder="Ex: Diabetes..."
                   />
                 </div>
                 <div className="col-span-1 sm:col-span-2">
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Alergias</label>
+                  <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-1">Alergias</label>
                   <textarea
                     value={formData.alergias || ''}
                     onChange={(e) => setFormData({...formData, alergias: e.target.value})}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all h-20 resize-none text-sm font-medium"
+                    className="w-full px-3 py-2 rounded-lg border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all h-16 resize-none text-xs font-medium"
                   />
                 </div>
                 <div className="col-span-1 sm:col-span-2">
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Medicamento Contínuo</label>
+                  <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-1">Medicamento Contínuo</label>
                   <textarea
                     value={formData.medicamentos || ''}
                     onChange={(e) => setFormData({...formData, medicamentos: e.target.value})}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all h-20 resize-none text-sm font-medium"
+                    className="w-full px-3 py-2 rounded-lg border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all h-16 resize-none text-xs font-medium"
                   />
                 </div>
                 <div className="col-span-1 sm:col-span-2">
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Observações</label>
+                  <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-1">Observações</label>
                   <textarea
                     value={formData.observacoes || ''}
                     onChange={(e) => setFormData({...formData, observacoes: e.target.value})}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all h-20 resize-none text-sm font-medium"
+                    className="w-full px-3 py-2 rounded-lg border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all h-16 resize-none text-xs font-medium"
                   />
                 </div>
-                <div className="col-span-1 sm:col-span-2 pt-2 border-t border-slate-100">
-                  <h4 className="text-[10px] font-black text-brand-blue uppercase tracking-[0.2em] mb-4 italic font-display">Validade do Cadastro</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="col-span-1 sm:col-span-2 pt-1 border-t border-slate-100">
+                  <h4 className="text-[9px] font-black text-brand-blue uppercase tracking-[0.2em] mb-2 italic font-display">Validade do Cadastro</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Data de Cadastro</label>
+                      <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-1">Data de Cadastro</label>
                       <input
                         type="date"
                         value={formData.data_cadastro || ''}
@@ -1228,38 +1232,38 @@ export default function AdminDashboard() {
                           const validDate = new Date(newDate);
                           validDate.setFullYear(validDate.getFullYear() + 1);
                           setFormData({ 
-                            ...formData, 
-                            data_cadastro: newDate,
-                            data_validade: validDate.toISOString().split('T')[0]
-                          });
+                             ...formData, 
+                             data_cadastro: newDate,
+                             data_validade: validDate.toISOString().split('T')[0]
+                           });
                         }}
-                        className="w-full px-4 py-3 rounded-xl border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all text-sm font-medium"
+                        className="w-full px-3 py-2 rounded-lg border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all text-xs font-medium"
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Data de Validade (1 Ano)</label>
+                      <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-1">Data de Validade (1 Ano)</label>
                       <input
                         type="date"
                         value={formData.data_validade || ''}
                         onChange={(e) => setFormData({...formData, data_validade: e.target.value})}
-                        className="w-full px-4 py-3 rounded-xl border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all text-sm font-medium"
+                        className="w-full px-3 py-2 rounded-lg border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all text-xs font-medium"
                       />
                     </div>
                   </div>
                 </div>
               </div>
-              <div className="pt-4 flex flex-col sm:flex-row gap-3 shrink-0">
+              <div className="pt-2 flex flex-col sm:flex-row gap-2 shrink-0">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="flex-1 px-4 py-3 rounded-xl border-2 border-slate-100 font-bold text-slate-400 hover:bg-slate-50 transition-all uppercase tracking-widest italic font-display text-sm"
+                  className="flex-1 px-3 py-2 rounded-lg border-2 border-slate-100 font-bold text-slate-400 hover:bg-slate-50 transition-all uppercase tracking-widest italic font-display text-[10px]"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="flex-1 bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-slate-200 uppercase tracking-widest italic font-display text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 bg-slate-900 hover:bg-slate-800 text-white font-bold py-2 rounded-lg transition-all shadow-lg shadow-slate-200 uppercase tracking-widest italic font-display text-[10px] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading ? 'Salvando...' : 'Salvar Cadastro'}
                 </button>
@@ -1273,51 +1277,51 @@ export default function AdminDashboard() {
       {isQrModalOpen && selectedUser && (
         <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in duration-500 no-print">
           <div className="bg-white rounded-[3rem] w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-500 border border-slate-100 print-label">
-            <div className="bg-brand-gradient p-8 flex justify-between items-center text-white no-print">
-              <h3 className="text-2xl font-black italic font-display uppercase tracking-tighter">QR Code de Identificação</h3>
+            <div className="bg-brand-gradient p-6 flex justify-between items-center text-white no-print">
+              <h3 className="text-xl font-black italic font-display uppercase tracking-tighter">QR Code de Identificação</h3>
               <button onClick={() => setIsQrModalOpen(false)} className="bg-white/20 hover:bg-white/30 p-2 rounded-xl transition-colors">
-                <X size={24} />
+                <X size={20} />
               </button>
             </div>
-            <div className="p-10 flex flex-col items-center text-center">
-              <div className="bg-white p-6 rounded-[2.5rem] shadow-2xl shadow-slate-100 border-4 border-brand-blue/10 mb-8">
+            <div className="p-6 flex flex-col items-center text-center">
+              <div className="bg-white p-4 rounded-[2rem] shadow-2xl shadow-slate-100 border-4 border-brand-blue/10 mb-4">
                 <QRCodeSVG 
                   value={getPublicUrl(selectedUser.id)} 
-                  size={220}
+                  size={180}
                   level="H"
                   includeMargin={true}
                 />
               </div>
-              <h4 className="text-2xl font-black text-slate-900 mb-2 tracking-tight">{selectedUser.nome_completo}</h4>
-              <p className="text-brand-blue font-black uppercase italic font-display text-lg mb-6">Nº Identificação: {selectedUser.id}</p>
+              <h4 className="text-xl font-black text-slate-900 mb-1 tracking-tight">{selectedUser.nome_completo}</h4>
+              <p className="text-brand-blue font-black uppercase italic font-display text-base mb-4">Nº Identificação: {selectedUser.id}</p>
               
-              <div className="flex gap-3 w-full mb-8 no-print">
+              <div className="flex gap-2 w-full mb-4 no-print">
                 <button
                   onClick={() => openPublicLink(selectedUser.id)}
-                  className="flex-1 bg-brand-blue/10 text-brand-blue font-black py-4 rounded-2xl hover:bg-brand-blue/20 transition-all flex items-center justify-center gap-2 uppercase tracking-widest italic font-display"
+                  className="flex-1 bg-brand-blue/10 text-brand-blue font-black py-3 rounded-xl hover:bg-brand-blue/20 transition-all flex items-center justify-center gap-2 uppercase tracking-widest italic font-display text-[10px]"
                 >
-                  <ExternalLink size={18} /> Ver Link
+                  <ExternalLink size={14} /> Ver Link
                 </button>
                 <button
                   onClick={() => copyToClipboard(getPublicUrl(selectedUser.id))}
-                  className="flex-1 bg-slate-100 text-slate-600 font-black py-4 rounded-2xl hover:bg-slate-200 transition-all flex items-center justify-center gap-2 uppercase tracking-widest italic font-display"
+                  className="flex-1 bg-slate-100 text-slate-600 font-black py-3 rounded-xl hover:bg-slate-200 transition-all flex items-center justify-center gap-2 uppercase tracking-widest italic font-display text-[10px]"
                 >
-                  <Copy size={18} /> Copiar
+                  <Copy size={14} /> Copiar
                 </button>
               </div>
 
-              <p className="text-slate-500 mb-10 font-medium leading-relaxed no-print">
+              <p className="text-slate-500 mb-6 font-medium leading-relaxed no-print text-xs">
                 Este QR Code aponta para a página pública de emergência do usuário. Imprima e cole no cartão de identificação.
               </p>
               <button
                 onClick={() => window.print()}
-                className="w-full bg-slate-900 text-white font-black py-5 rounded-2xl hover:bg-slate-800 transition-all flex items-center justify-center gap-3 uppercase tracking-widest italic font-display shadow-xl shadow-slate-200 mb-4 no-print"
+                className="w-full bg-slate-900 text-white font-black py-4 rounded-xl hover:bg-slate-800 transition-all flex items-center justify-center gap-2 uppercase tracking-widest italic font-display shadow-xl shadow-slate-200 mb-3 no-print text-[10px]"
               >
-                <Printer size={22} /> Imprimir Etiqueta
+                <Printer size={18} /> Imprimir Etiqueta
               </button>
               <button
                 onClick={() => setIsQrModalOpen(false)}
-                className="w-full bg-white text-slate-400 border-2 border-slate-100 font-black py-4 rounded-2xl hover:bg-slate-50 transition-all uppercase tracking-widest italic font-display no-print"
+                className="w-full bg-white text-slate-400 border-2 border-slate-100 font-black py-3 rounded-xl hover:bg-slate-50 transition-all uppercase tracking-widest italic font-display no-print text-[10px]"
               >
                 Fechar
               </button>
@@ -1330,9 +1334,9 @@ export default function AdminDashboard() {
       {isDetailsModalOpen && selectedUser && (
         <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in duration-500">
           <div className="bg-white rounded-[3rem] w-full max-w-3xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col animate-in zoom-in-95 duration-500 border border-slate-100">
-            <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 bg-brand-gradient text-white rounded-2xl flex items-center justify-center font-bold text-2xl italic font-display shadow-lg shadow-blue-100 overflow-hidden">
+            <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-brand-gradient text-white rounded-xl flex items-center justify-center font-bold text-xl italic font-display shadow-lg shadow-blue-100 overflow-hidden">
                   {selectedUser.foto ? (
                     <img src={selectedUser.foto} alt={selectedUser.nome_completo} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                   ) : (
@@ -1340,108 +1344,108 @@ export default function AdminDashboard() {
                   )}
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-slate-900 tracking-tight">{selectedUser.nome_completo}</h3>
-                  <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">Nº Identificação: {selectedUser.id} | CPF: {selectedUser.cpf}</p>
+                  <h3 className="text-lg font-bold text-slate-900 tracking-tight">{selectedUser.nome_completo}</h3>
+                  <p className="text-slate-500 font-bold uppercase tracking-widest text-[9px]">Nº Identificação: {selectedUser.id} | CPF: {selectedUser.cpf}</p>
                 </div>
               </div>
-              <button onClick={() => setIsDetailsModalOpen(false)} className="bg-slate-200/50 hover:bg-slate-200 p-2 rounded-xl transition-colors text-slate-500">
-                <X size={20} />
+              <button onClick={() => setIsDetailsModalOpen(false)} className="bg-slate-200/50 hover:bg-slate-200 p-1.5 rounded-lg transition-colors text-slate-500">
+                <X size={18} />
               </button>
             </div>
             
-            <div className="p-8 overflow-y-auto space-y-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="space-y-5">
-                  <h4 className="font-bold text-slate-900 border-b-2 border-brand-blue/10 pb-2 flex items-center gap-2 uppercase tracking-tighter italic font-display text-lg">
-                    <User size={18} className="text-brand-blue" /> Informações Pessoais
+            <div className="p-6 overflow-y-auto space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <h4 className="font-bold text-slate-900 border-b-2 border-brand-blue/10 pb-1.5 flex items-center gap-2 uppercase tracking-tighter italic font-display text-base">
+                    <User size={16} className="text-brand-blue" /> Informações Pessoais
                   </h4>
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     <div className="flex flex-col">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Data de Nascimento</span>
-                      <span className="text-base font-bold text-slate-700">{selectedUser.data_nascimento || 'N/A'}</span>
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Sexo</span>
-                      <span className="text-base font-bold text-slate-700">{selectedUser.sexo || 'N/A'}</span>
+                      <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Data de Nascimento</span>
+                      <span className="text-sm font-bold text-slate-700">{selectedUser.data_nascimento || 'N/A'}</span>
                     </div>
                     <div className="flex flex-col">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Cartão SUS</span>
-                      <span className="text-base font-bold text-slate-700">{selectedUser.cartao_sus || 'N/A'}</span>
+                      <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Sexo</span>
+                      <span className="text-sm font-bold text-slate-700">{selectedUser.sexo || 'N/A'}</span>
                     </div>
                     <div className="flex flex-col">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Tipo Sanguíneo</span>
-                      <span className="text-xl font-bold text-brand-blue italic font-display">{selectedUser.tipo_sanguineo || 'N/A'}</span>
+                      <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Cartão SUS</span>
+                      <span className="text-sm font-bold text-slate-700">{selectedUser.cartao_sus || 'N/A'}</span>
                     </div>
                     <div className="flex flex-col">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Telefone</span>
-                      <span className="text-base font-bold text-slate-700">{selectedUser.telefone || 'N/A'}</span>
+                      <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Tipo Sanguíneo</span>
+                      <span className="text-lg font-bold text-brand-blue italic font-display">{selectedUser.tipo_sanguineo || 'N/A'}</span>
                     </div>
                     <div className="flex flex-col">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Última Vacina</span>
-                      <span className="text-base font-bold text-slate-700">{selectedUser.ultima_vacina || 'N/A'}</span>
+                      <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Telefone</span>
+                      <span className="text-sm font-bold text-slate-700">{selectedUser.telefone || 'N/A'}</span>
                     </div>
-                    <div className="flex flex-col p-3 bg-slate-50 rounded-xl border border-slate-100">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Data de Cadastro</span>
-                      <span className="text-base font-bold text-slate-700">{selectedUser.data_cadastro ? new Date(selectedUser.data_cadastro).toLocaleDateString('pt-BR') : 'N/A'}</span>
+                    <div className="flex flex-col">
+                      <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Última Vacina</span>
+                      <span className="text-sm font-bold text-slate-700">{selectedUser.ultima_vacina || 'N/A'}</span>
                     </div>
-                    <div className="flex flex-col p-3 bg-blue-50 rounded-xl border border-blue-100">
-                      <span className="text-[10px] font-bold text-blue-600 uppercase tracking-widest mb-0.5">Válido Até</span>
-                      <span className="text-base font-bold text-blue-900">{selectedUser.data_validade ? new Date(selectedUser.data_validade).toLocaleDateString('pt-BR') : 'N/A'}</span>
+                    <div className="flex flex-col p-2 bg-slate-50 rounded-lg border border-slate-100">
+                      <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Data de Cadastro</span>
+                      <span className="text-sm font-bold text-slate-700">{selectedUser.data_cadastro ? new Date(selectedUser.data_cadastro).toLocaleDateString('pt-BR') : 'N/A'}</span>
+                    </div>
+                    <div className="flex flex-col p-2 bg-blue-50 rounded-lg border border-blue-100">
+                      <span className="text-[9px] font-bold text-blue-600 uppercase tracking-widest mb-0.5">Válido Até</span>
+                      <span className="text-sm font-bold text-blue-900">{selectedUser.data_validade ? new Date(selectedUser.data_validade).toLocaleDateString('pt-BR') : 'N/A'}</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="space-y-5">
-                  <h4 className="font-bold text-slate-900 border-b-2 border-brand-blue/10 pb-2 flex items-center gap-2 uppercase tracking-tighter italic font-display text-lg">
-                    <CreditCard size={18} className="text-brand-blue" /> Plano de Saúde
+                <div className="space-y-4">
+                  <h4 className="font-bold text-slate-900 border-b-2 border-brand-blue/10 pb-1.5 flex items-center gap-2 uppercase tracking-tighter italic font-display text-base">
+                    <CreditCard size={16} className="text-brand-blue" /> Plano de Saúde
                   </h4>
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     <div className="flex flex-col">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Nome do Plano</span>
-                      <span className="text-base font-bold text-slate-700">{selectedUser.plano_saude_nome || 'N/A'}</span>
+                      <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Nome do Plano</span>
+                      <span className="text-sm font-bold text-slate-700">{selectedUser.plano_saude_nome || 'N/A'}</span>
                     </div>
                     <div className="flex flex-col">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Nº do Cartão</span>
-                      <span className="text-base font-bold text-slate-700">{selectedUser.plano_saude_numero || 'N/A'}</span>
+                      <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Nº do Cartão</span>
+                      <span className="text-sm font-bold text-slate-700">{selectedUser.plano_saude_numero || 'N/A'}</span>
                     </div>
                     <div className="flex flex-col">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Tipo do Plano</span>
-                      <p className="text-base font-bold text-slate-700 leading-tight break-words">{selectedUser.plano_saude_tipo || 'N/A'}</p>
+                      <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Tipo do Plano</span>
+                      <p className="text-sm font-bold text-slate-700 leading-tight break-words">{selectedUser.plano_saude_tipo || 'N/A'}</p>
                     </div>
                   </div>
                 </div>
 
-                <div className="space-y-5">
-                  <h4 className="font-bold text-slate-900 border-b-2 border-brand-green/10 pb-2 flex items-center gap-2 uppercase tracking-tighter italic font-display text-lg">
-                    <ShieldAlert size={18} className="text-brand-green" /> Dados de Emergência
+                <div className="space-y-4">
+                  <h4 className="font-bold text-slate-900 border-b-2 border-brand-green/10 pb-1.5 flex items-center gap-2 uppercase tracking-tighter italic font-display text-base">
+                    <ShieldAlert size={16} className="text-brand-green" /> Dados de Emergência
                   </h4>
-                  <div className="space-y-3">
-                    <div className="p-4 bg-amber-50 rounded-2xl border border-amber-100">
-                      <p className="text-[10px] font-bold text-amber-700 uppercase tracking-widest mb-1">Alergias</p>
-                      <p className="text-base font-bold text-amber-900 leading-tight">{selectedUser.alergias || 'Nenhuma informada'}</p>
+                  <div className="space-y-2">
+                    <div className="p-3 bg-amber-50 rounded-xl border border-amber-100">
+                      <p className="text-[9px] font-bold text-amber-700 uppercase tracking-widest mb-1">Alergias</p>
+                      <p className="text-sm font-bold text-amber-900 leading-tight">{selectedUser.alergias || 'Nenhuma informada'}</p>
                     </div>
-                    <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100">
-                      <p className="text-[10px] font-bold text-blue-700 uppercase tracking-widest mb-1">Medicamento Contínuo</p>
-                      <p className="text-base font-bold text-blue-900 leading-tight">{selectedUser.medicamentos || 'Nenhum informado'}</p>
+                    <div className="p-3 bg-blue-50 rounded-xl border border-blue-100">
+                      <p className="text-[9px] font-bold text-blue-700 uppercase tracking-widest mb-1">Medicamento Contínuo</p>
+                      <p className="text-sm font-bold text-blue-900 leading-tight">{selectedUser.medicamentos || 'Nenhum informado'}</p>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className="space-y-5">
-                <h4 className="font-bold text-slate-900 border-b-2 border-slate-100 pb-2 uppercase tracking-tighter italic font-display text-lg">Outras Informações</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Contatos de Emergência</p>
-                    <p className="text-base font-bold text-slate-700 whitespace-pre-line leading-relaxed">{selectedUser.contatos_emergencia || 'Nenhum informado'}</p>
+              <div className="space-y-4">
+                <h4 className="font-bold text-slate-900 border-b-2 border-slate-100 pb-1.5 uppercase tracking-tighter italic font-display text-base">Outras Informações</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Contatos de Emergência</p>
+                    <p className="text-sm font-bold text-slate-700 whitespace-pre-line leading-relaxed">{selectedUser.contatos_emergencia || 'Nenhum informado'}</p>
                   </div>
-                  <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Condições Preexistentes</p>
-                    <p className="text-base font-bold text-slate-700 whitespace-pre-line leading-relaxed">{selectedUser.condicoes_preexistentes || 'Nenhuma informada'}</p>
+                  <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Condições Preexistentes</p>
+                    <p className="text-sm font-bold text-slate-700 whitespace-pre-line leading-relaxed">{selectedUser.condicoes_preexistentes || 'Nenhuma informada'}</p>
                   </div>
-                  <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100 md:col-span-2">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Observações</p>
-                    <p className="text-base font-bold text-slate-700 whitespace-pre-line leading-relaxed">{selectedUser.observacoes || 'Nenhuma observação informada'}</p>
+                  <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 md:col-span-2">
+                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Observações</p>
+                    <p className="text-sm font-bold text-slate-700 whitespace-pre-line leading-relaxed">{selectedUser.observacoes || 'Nenhuma observação informada'}</p>
                   </div>
                 </div>
               </div>
@@ -1580,11 +1584,11 @@ export default function AdminDashboard() {
                 <X size={20} />
               </button>
             </div>
-            <form onSubmit={handleUpdateUser} className="p-5 sm:p-8 overflow-y-auto space-y-4 sm:space-y-6">
+            <form onSubmit={handleUpdateUser} className="p-4 sm:p-6 overflow-y-auto space-y-3 sm:space-y-4">
               {/* Foto de Perfil */}
-              <div className="flex flex-col items-center gap-4 py-4 border-b border-slate-50">
+              <div className="flex flex-col items-center gap-2 py-2 border-b border-slate-50">
                 <div className="relative group">
-                  <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-white shadow-xl bg-slate-100 flex items-center justify-center">
+                  <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-white shadow-xl bg-slate-100 flex items-center justify-center">
                     {formData.foto ? (
                       <img 
                         src={formData.foto} 
@@ -1593,11 +1597,11 @@ export default function AdminDashboard() {
                         referrerPolicy="no-referrer"
                       />
                     ) : (
-                      <User size={32} className="text-slate-300" />
+                      <User size={28} className="text-slate-300" />
                     )}
                   </div>
-                  <label className="absolute bottom-0 right-0 p-2 bg-brand-blue text-white rounded-full shadow-lg cursor-pointer hover:bg-blue-700 transition-all active:scale-90">
-                    <Camera size={14} />
+                  <label className="absolute bottom-0 right-0 p-1.5 bg-brand-blue text-white rounded-full shadow-lg cursor-pointer hover:bg-blue-700 transition-all active:scale-90">
+                    <Camera size={12} />
                     <input 
                       type="file" 
                       accept="image/*" 
@@ -1612,47 +1616,47 @@ export default function AdminDashboard() {
                     />
                   </label>
                 </div>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Foto de Perfil (Opcional)</p>
+                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Foto de Perfil (Opcional)</p>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="sm:col-span-2">
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Nome Completo</label>
+                  <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-1">Nome Completo</label>
                   <input
                     type="text"
                     value={formData.nome_completo}
                     onChange={(e) => setFormData({...formData, nome_completo: e.target.value})}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all text-base font-medium"
+                    className="w-full px-3 py-2 rounded-lg border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all text-sm font-medium"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Número de Identificação (ID)</label>
+                  <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-1">Número de Identificação (ID)</label>
                   <input
                     type="text"
                     value={formData.id}
                     onChange={(e) => setFormData({...formData, id: e.target.value})}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all text-sm font-bold italic font-display"
+                    className="w-full px-3 py-2 rounded-lg border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all text-xs font-bold italic font-display"
                   />
-                  <p className="text-[9px] text-amber-600 mt-1 ml-1 italic font-bold uppercase tracking-widest">
-                    <ShieldAlert size={10} className="inline mr-1" /> Atenção: Alterar o ID mudará o link do QR Code.
+                  <p className="text-[8px] text-amber-600 mt-0.5 ml-1 italic font-bold uppercase tracking-widest leading-tight">
+                    <ShieldAlert size={8} className="inline mr-1" /> Atenção: Alterar o ID mudará o link do QR Code.
                   </p>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Data de Nascimento</label>
+                  <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-1">Data de Nascimento</label>
                   <input
                     type="date"
                     value={formData.data_nascimento || ''}
                     onChange={(e) => setFormData({...formData, data_nascimento: e.target.value})}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all text-sm font-medium"
+                    className="w-full px-3 py-2 rounded-lg border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all text-xs font-medium"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Sexo</label>
+                  <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-1">Sexo</label>
                   <select
                     value={formData.sexo || ''}
                     onChange={(e) => setFormData({...formData, sexo: e.target.value})}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all font-medium text-sm appearance-none cursor-pointer"
+                    className="w-full px-3 py-2 rounded-lg border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all font-medium text-xs appearance-none cursor-pointer"
                   >
                     <option value="">Selecione...</option>
                     <option value="Masculino">Masculino</option>
@@ -1662,84 +1666,84 @@ export default function AdminDashboard() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Cartão SUS</label>
+                  <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-1">Cartão SUS</label>
                   <input
                     type="text"
                     value={formData.cartao_sus || ''}
                     onChange={(e) => setFormData({...formData, cartao_sus: e.target.value})}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all text-sm font-medium"
+                    className="w-full px-3 py-2 rounded-lg border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all text-xs font-medium"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1">CPF</label>
+                  <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-1">CPF</label>
                   <input
                     type="text"
                     value={formData.cpf || ''}
                     onChange={(e) => setFormData({...formData, cpf: e.target.value})}
                     placeholder="000.000.000-00"
-                    className="w-full px-4 py-3 rounded-xl border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all text-sm font-medium"
+                    className="w-full px-3 py-2 rounded-lg border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all text-xs font-medium"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Telefone</label>
+                  <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-1">Telefone</label>
                   <input
                     type="text"
                     value={formData.telefone || ''}
                     onChange={(e) => setFormData({...formData, telefone: e.target.value})}
                     placeholder="(00) 00000-0000"
-                    className="w-full px-4 py-3 rounded-xl border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all text-sm font-medium"
+                    className="w-full px-3 py-2 rounded-lg border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all text-xs font-medium"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Última Vacina</label>
+                  <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-1">Última Vacina</label>
                   <input
                     type="text"
                     value={formData.ultima_vacina || ''}
                     onChange={(e) => setFormData({...formData, ultima_vacina: e.target.value})}
                     placeholder="Ex: Gripe - 10/2023"
-                    className="w-full px-4 py-3 rounded-xl border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all text-sm font-medium"
+                    className="w-full px-3 py-2 rounded-lg border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all text-xs font-medium"
                   />
                 </div>
-                <div className="sm:col-span-2 pt-2 border-t border-slate-100">
-                  <h4 className="text-[10px] font-black text-brand-blue uppercase tracking-[0.2em] mb-4 italic font-display">Plano de Saúde</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="sm:col-span-2 pt-1 border-t border-slate-100">
+                  <h4 className="text-[9px] font-black text-brand-blue uppercase tracking-[0.2em] mb-2 italic font-display">Plano de Saúde</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <div>
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Operadora</label>
+                      <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-1">Operadora</label>
                       <input
                         type="text"
                         value={formData.plano_saude_nome || ''}
                         onChange={(e) => setFormData({...formData, plano_saude_nome: e.target.value})}
-                        placeholder="Ex: Unimed, Bradesco..."
-                        className="w-full px-4 py-3 rounded-xl border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all text-sm font-medium"
+                        placeholder="Ex: Unimed..."
+                        className="w-full px-3 py-2 rounded-lg border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all text-xs font-medium"
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Nº do Cartão</label>
+                      <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-1">Nº do Cartão</label>
                       <input
                         type="text"
                         value={formData.plano_saude_numero || ''}
                         onChange={(e) => setFormData({...formData, plano_saude_numero: e.target.value})}
-                        placeholder="0000 0000 0000 0000"
-                        className="w-full px-4 py-3 rounded-xl border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all text-sm font-medium"
+                        placeholder="0000..."
+                        className="w-full px-3 py-2 rounded-lg border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all text-xs font-medium"
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Tipo do Plano</label>
+                      <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-1">Tipo do Plano</label>
                       <textarea
                         value={formData.plano_saude_tipo || ''}
                         onChange={(e) => setFormData({...formData, plano_saude_tipo: e.target.value})}
-                        placeholder="Ex: Enfermaria, Apartamento..."
-                        className="w-full px-4 py-3 rounded-xl border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all text-sm font-medium h-20 resize-none"
+                        placeholder="Ex: Enfermaria..."
+                        className="w-full px-3 py-2 rounded-lg border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all text-xs font-medium h-12 resize-none"
                       />
                     </div>
                   </div>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Tipo Sanguíneo</label>
+                  <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-1">Tipo Sanguíneo</label>
                   <select
                     value={formData.tipo_sanguineo || ''}
                     onChange={(e) => setFormData({...formData, tipo_sanguineo: e.target.value})}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all font-bold text-base appearance-none cursor-pointer"
+                    className="w-full px-3 py-2 rounded-lg border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all font-bold text-sm appearance-none cursor-pointer"
                   >
                     <option value="">Selecione...</option>
                     {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map(t => (
@@ -1748,51 +1752,51 @@ export default function AdminDashboard() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Alergias</label>
+                  <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-1">Alergias</label>
                   <textarea
                     value={formData.alergias || ''}
                     onChange={(e) => setFormData({...formData, alergias: e.target.value})}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all h-24 resize-none text-sm font-medium"
+                    className="w-full px-3 py-2 rounded-lg border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all h-16 resize-none text-xs font-medium"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Medicamento Contínuo</label>
+                  <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-1">Medicamento Contínuo</label>
                   <textarea
                     value={formData.medicamentos || ''}
                     onChange={(e) => setFormData({...formData, medicamentos: e.target.value})}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all h-24 resize-none text-sm font-medium"
+                    className="w-full px-3 py-2 rounded-lg border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all h-16 resize-none text-xs font-medium"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Contatos de Emergência</label>
+                  <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-1">Contatos de Emergência</label>
                   <textarea
                     value={formData.contatos_emergencia || ''}
                     onChange={(e) => setFormData({...formData, contatos_emergencia: e.target.value})}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none h-24 resize-none text-sm font-medium"
+                    className="w-full px-3 py-2 rounded-lg border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none h-16 resize-none text-xs font-medium"
                   />
                 </div>
                 <div className="sm:col-span-2">
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Condições Preexistentes</label>
+                  <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-1">Condições Preexistentes</label>
                   <textarea
                     value={formData.condicoes_preexistentes || ''}
                     onChange={(e) => setFormData({...formData, condicoes_preexistentes: e.target.value})}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none h-24 resize-none text-sm font-medium"
+                    className="w-full px-3 py-2 rounded-lg border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none h-16 resize-none text-xs font-medium"
                   />
                 </div>
                 <div className="sm:col-span-2">
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Observações</label>
+                  <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-1">Observações</label>
                   <textarea
                     value={formData.observacoes || ''}
                     onChange={(e) => setFormData({...formData, observacoes: e.target.value})}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none h-24 resize-none text-sm font-medium"
+                    className="w-full px-3 py-2 rounded-lg border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none h-16 resize-none text-xs font-medium"
                     placeholder="Informações adicionais..."
                   />
                 </div>
-                <div className="sm:col-span-2 pt-2 border-t border-slate-100">
-                  <h4 className="text-[10px] font-black text-brand-blue uppercase tracking-[0.2em] mb-4 italic font-display">Validade do Cadastro</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="sm:col-span-2 pt-1 border-t border-slate-100">
+                  <h4 className="text-[9px] font-black text-brand-blue uppercase tracking-[0.2em] mb-2 italic font-display">Validade do Cadastro</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Data de Cadastro</label>
+                      <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-1">Data de Cadastro</label>
                       <input
                         type="date"
                         value={formData.data_cadastro || ''}
@@ -1806,43 +1810,43 @@ export default function AdminDashboard() {
                             data_validade: validDate.toISOString().split('T')[0]
                           });
                         }}
-                        className="w-full px-4 py-3 rounded-xl border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all text-sm font-medium"
+                        className="w-full px-3 py-2 rounded-lg border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all text-xs font-medium"
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Data de Validade (1 Ano)</label>
+                      <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-1">Data de Validade (1 Ano)</label>
                       <input
                         type="date"
                         value={formData.data_validade || ''}
                         onChange={(e) => setFormData({...formData, data_validade: e.target.value})}
-                        className="w-full px-4 py-3 rounded-xl border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all text-sm font-medium"
+                        className="w-full px-3 py-2 rounded-lg border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all text-xs font-medium"
                       />
                     </div>
                   </div>
                 </div>
               </div>
-              <div className="pt-4 flex flex-col sm:flex-row gap-3 shrink-0">
+              <div className="pt-2 flex flex-col sm:flex-row gap-2 shrink-0">
                 <button
                   type="button"
                   onClick={() => {
                     handleDeleteUser(selectedUser.uid);
                     setIsEditModalOpen(false);
                   }}
-                  className="px-4 bg-red-50 text-red-600 font-bold py-3 rounded-xl hover:bg-red-100 transition-all flex items-center justify-center gap-2 uppercase tracking-widest italic font-display text-sm"
+                  className="px-3 bg-red-50 text-red-600 font-bold py-2 rounded-lg hover:bg-red-100 transition-all flex items-center justify-center gap-2 uppercase tracking-widest italic font-display text-[10px]"
                 >
-                  <Trash2 size={18} /> Excluir
+                  <Trash2 size={14} /> Excluir
                 </button>
                 <button
                   type="button"
                   onClick={() => setIsEditModalOpen(false)}
-                  className="flex-1 px-4 py-3 rounded-xl border-2 border-slate-100 font-bold text-slate-400 hover:bg-slate-50 transition-all uppercase tracking-widest italic font-display text-sm"
+                  className="flex-1 px-3 py-2 rounded-lg border-2 border-slate-100 font-bold text-slate-400 hover:bg-slate-50 transition-all uppercase tracking-widest italic font-display text-[10px]"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="flex-1 bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-slate-200 uppercase tracking-widest italic font-display text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 bg-slate-900 hover:bg-slate-800 text-white font-bold py-2 rounded-lg transition-all shadow-lg shadow-slate-200 uppercase tracking-widest italic font-display text-[10px] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading ? 'Salvando...' : 'Salvar Alterações'}
                 </button>
@@ -1853,7 +1857,7 @@ export default function AdminDashboard() {
       )}
       {/* Success Confirmation Modal */}
       {isSuccessModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md flex items-center justify-center z-[70] p-4 animate-in fade-in duration-300">
+        <div className="fixed inset-0 bg-slate-900/90 backdrop-blur-xl flex items-center justify-center z-[9999] p-4 animate-in fade-in duration-300">
           <div className="bg-white rounded-[2.5rem] w-full max-w-sm shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 border border-slate-100 p-8 text-center">
             <div className="w-20 h-20 bg-green-50 text-green-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-green-100">
               <CheckCircle2 size={40} />
@@ -1876,57 +1880,57 @@ export default function AdminDashboard() {
       {isSecurityModalOpen && (
         <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in duration-500">
           <div className="bg-white rounded-[3rem] w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-500 border border-slate-100">
-            <div className="bg-brand-gradient p-8 flex justify-between items-center text-white">
-              <h3 className="text-2xl font-black italic font-display uppercase tracking-tighter">Segurança da Conta</h3>
+            <div className="bg-brand-gradient p-6 flex justify-between items-center text-white">
+              <h3 className="text-xl font-black italic font-display uppercase tracking-tighter">Segurança da Conta</h3>
               <button onClick={() => setIsSecurityModalOpen(false)} className="bg-white/20 hover:bg-white/30 p-2 rounded-xl transition-colors">
-                <X size={24} />
+                <X size={20} />
               </button>
             </div>
-            <form onSubmit={handleChangePassword} className="p-10 space-y-6">
-              <div className="w-16 h-16 bg-slate-50 text-brand-blue rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <Lock size={32} />
+            <form onSubmit={handleChangePassword} className="p-6 space-y-4">
+              <div className="w-12 h-12 bg-slate-50 text-brand-blue rounded-xl flex items-center justify-center mx-auto mb-2">
+                <Lock size={24} />
               </div>
-              <p className="text-slate-500 text-center font-medium mb-6">
-                Altere sua senha de acesso para garantir a estabilidade e segurança da área administrativa.
+              <p className="text-slate-500 text-center font-medium mb-4 text-sm">
+                Altere sua senha de acesso para garantir a segurança da área administrativa.
               </p>
               
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Nova Senha</label>
+                  <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-1">Nova Senha</label>
                   <input
                     type="password"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all text-base font-medium"
+                    className="w-full px-3 py-2 rounded-lg border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all text-sm font-medium"
                     required
                     minLength={6}
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Confirmar Nova Senha</label>
+                  <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1 ml-1">Confirmar Nova Senha</label>
                   <input
                     type="password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all text-base font-medium"
+                    className="w-full px-3 py-2 rounded-lg border border-slate-100 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none transition-all text-sm font-medium"
                     required
                     minLength={6}
                   />
                 </div>
               </div>
 
-              <div className="flex flex-col gap-3 pt-4">
+              <div className="flex flex-col gap-2 pt-2">
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-slate-900 text-white font-black py-4 rounded-2xl hover:bg-slate-800 transition-all flex items-center justify-center gap-3 uppercase tracking-widest italic font-display shadow-xl shadow-slate-200 disabled:opacity-50"
+                  className="w-full bg-slate-900 text-white font-black py-3 rounded-xl hover:bg-slate-800 transition-all flex items-center justify-center gap-2 uppercase tracking-widest italic font-display shadow-xl shadow-slate-200 disabled:opacity-50 text-[10px]"
                 >
                   {loading ? 'Alterando...' : 'Atualizar Senha'}
                 </button>
                 <button
                   type="button"
                   onClick={() => setIsSecurityModalOpen(false)}
-                  className="w-full bg-white text-slate-400 border-2 border-slate-100 font-black py-4 rounded-2xl hover:bg-slate-50 transition-all uppercase tracking-widest italic font-display"
+                  className="w-full bg-white text-slate-400 border-2 border-slate-100 font-black py-2 rounded-xl hover:bg-slate-50 transition-all uppercase tracking-widest italic font-display text-[10px]"
                 >
                   Cancelar
                 </button>
