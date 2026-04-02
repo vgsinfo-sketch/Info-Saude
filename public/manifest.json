@@ -1,0 +1,21 @@
+{
+  "name": "Info+Saúde - Seus dados sempre à mão",
+  "short_name": "Info+Saúde",
+  "description": "Acesse seus dados de saúde em qualquer lugar com Info+Saúde.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0072CE",
+  "icons": [
+    {
+      "src": "https://picsum.photos/seed/infosaude/192/192",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://picsum.photos/seed/infosaude/512/512",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+{
+  "name": "Info+Saúde",
+  "description": "Gerenciamento de informações de saúde com acesso via QR Code e NFC para emergências.",
+  "requestFramePermissions": []
+}

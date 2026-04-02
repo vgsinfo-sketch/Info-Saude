@@ -1,0 +1,9 @@
+{
+  "timestamp": "2026-04-01T20:58:00Z",
+  "description": "Ponto de restauração manual após correções de PDF e remoção de botões de impressão.",
+  "files": [
+    "src/pages/PublicProfile.tsx",
+    "src/pages/AdminDashboard.tsx",
+    "src/pages/UserDashboard.tsx"
+  ]
+}

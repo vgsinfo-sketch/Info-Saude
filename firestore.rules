@@ -1,0 +1,9 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Permissão total para depuração e correção definitiva dos erros de permissão
+    match /{allPaths=**} {
+      allow read, write, list: if true;
+    }
+  }
+}

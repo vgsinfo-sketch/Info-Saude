@@ -1,0 +1,41 @@
+{
+  "restoration_point_name": "FICHA_MEDICA_ESTAVEL_V1",
+  "date": "2026-03-28T23:46:01Z",
+  "description": "Configuração completa com campos de Plano de Saúde, Data de Nascimento e Sexo. Interface elegante e profissional implementada.",
+  "blueprint": {
+    "entities": {
+      "usuarios": {
+        "title": "Usuário de Saúde",
+        "description": "Informações de saúde de um usuário vinculadas a um ID único.",
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "description": "ID único do cartão (ex: INFO-001)" },
+          "nome_completo": { "type": "string" },
+          "cpf": { "type": "string" },
+          "cartao_sus": { "type": "string" },
+          "tipo_sanguineo": { "type": "string", "enum": ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"] },
+          "alergias": { "type": "string" },
+          "medicamentos": { "type": "string" },
+          "condicoes_preexistentes": { "type": "string" },
+          "ultima_vacina": { "type": "string" },
+          "contatos_emergencia": { "type": "string" },
+          "telefone": { "type": "string" },
+          "data_nascimento": { "type": "string", "format": "date", "description": "Data de nascimento do usuário" },
+          "sexo": { "type": "string", "enum": ["Masculino", "Feminino", "Outro", "Não informado"], "description": "Gênero do usuário" },
+          "observacoes": { "type": "string", "description": "Observações administrativas internas" },
+          "role": { "type": "string", "enum": ["user", "admin"], "description": "Papel do usuário no sistema" },
+          "plano_saude_nome": { "type": "string", "description": "Nome do plano de saúde" },
+          "plano_saude_numero": { "type": "string", "description": "Número do cartão do plano" },
+          "plano_saude_tipo": { "type": "string", "description": "Tipo do plano" }
+        },
+        "required": ["id", "nome_completo", "cpf"]
+      }
+    },
+    "firestore": {
+      "/usuarios/{userId}": {
+        "schema": "usuarios",
+        "description": "Coleção de usuários de saúde."
+      }
+    }
+  }
+}
