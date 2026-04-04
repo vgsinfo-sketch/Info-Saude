@@ -458,6 +458,7 @@ export default function AdminDashboard() {
       
       setSuccessMessage('Usuário criado com sucesso!');
       setIsSuccessModalOpen(true);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       console.log('Admin success modal triggered (create)');
       setIsModalOpen(false);
       setFormData({ 
@@ -551,6 +552,7 @@ export default function AdminDashboard() {
       
       setSuccessMessage('Cadastro atualizado com sucesso!');
       setIsSuccessModalOpen(true);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       console.log('Admin success modal triggered');
       setIsEditModalOpen(false);
     } catch (err: any) {
@@ -583,10 +585,12 @@ export default function AdminDashboard() {
         setIsSecurityModalOpen(false);
         setNewPassword('');
         setConfirmPassword('');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       }
     } catch (err: any) {
       console.error(err);
       setError('Erro ao alterar senha. Talvez você precise fazer login novamente para esta ação.');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } finally {
       setLoading(false);
     }
@@ -1857,7 +1861,7 @@ export default function AdminDashboard() {
       )}
       {/* Success Confirmation Modal */}
       {isSuccessModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/90 backdrop-blur-xl flex items-center justify-center z-[9999] p-4 animate-in fade-in duration-300">
+        <div className="fixed inset-0 bg-slate-900/80 flex items-center justify-center z-[9999] p-4 animate-in fade-in duration-300">
           <div className="bg-white rounded-[2.5rem] w-full max-w-sm shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 border border-slate-100 p-8 text-center">
             <div className="w-20 h-20 bg-green-50 text-green-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-green-100">
               <CheckCircle2 size={40} />
