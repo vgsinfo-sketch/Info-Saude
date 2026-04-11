@@ -5,6 +5,7 @@ import { Usuario, Anexo } from '../types';
 import Layout from '../components/Layout';
 import { Plus, Search, User, Trash2, Edit2, QrCode, X, Save, ShieldAlert, CheckCircle2, ExternalLink, Copy, Eye, ArrowLeft, CreditCard, Printer, FileText, Loader2, Download, Upload, Camera } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
+import QRCode from 'qrcode';
 import { initializeApp, getApps, getApp, deleteApp } from 'firebase/app';
 import { getAuth, createUserWithEmailAndPassword, signOut, updatePassword, signInWithEmailAndPassword } from 'firebase/auth';
 import firebaseConfig from '../../firebase-applet-config.json';
@@ -95,6 +96,209 @@ export default function AdminDashboard() {
         };
       };
     });
+  };
+
+  const handlePrintEtiqueta = () => {
+    if (!selectedUser) return;
+    
+    const qrCodeElement = document.querySelector('#qr-code-main svg');
+    if (!qrCodeElement) return;
+    
+    const qrCodeData = new XMLSerializer().serializeToString(qrCodeElement);
+    const qrCodeBase64 = 'data:image/svg+xml;base64,' + btoa(qrCodeData);
+
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Etiqueta QR - ${selectedUser.nome_completo}</title>
+          <style>
+            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+            body { 
+              margin: 0; 
+              padding: 20px; 
+              display: flex; 
+              justify-content: center; 
+              align-items: center; 
+              min-height: 100vh;
+              background: #f1f5f9;
+              font-family: 'Inter', sans-serif;
+            }
+            .label {
+              width: 400px;
+              background: white;
+              padding: 30px;
+              border-radius: 20px;
+              text-align: center;
+              box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+              border: 1px solid #e2e8f0;
+            }
+            .qr-img {
+              width: 200px;
+              height: 200px;
+              margin-bottom: 20px;
+            }
+            .name {
+              font-weight: 900;
+              font-size: 24px;
+              color: #0f172a;
+              margin: 0 0 5px 0;
+              text-transform: uppercase;
+            }
+            .id {
+              font-weight: 700;
+              font-size: 18px;
+              color: #0072CE;
+              margin: 0;
+              font-style: italic;
+            }
+            @media print {
+              body { background: white; padding: 0; }
+              .label { box-shadow: none; border: none; }
+              @page { size: portrait; margin: 0; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="label">
+            <img src="${qrCodeBase64}" class="qr-img" />
+            <h2 class="name">${selectedUser.nome_completo}</h2>
+            <p class="id">ID: ${selectedUser.id}</p>
+          </div>
+          <script>
+            window.onload = () => {
+              setTimeout(() => {
+                window.print();
+                window.close();
+              }, 500);
+            };
+          </script>
+        </body>
+      </html>
+    `;
+
+    printWindow.document.write(html);
+    printWindow.document.close();
+  };
+
+  const handlePrintAllEtiquetas = async () => {
+    if (usuarios.length === 0) return;
+    
+    setLoading(true);
+    try {
+      const labelsHtml = await Promise.all(usuarios.map(async (user) => {
+        const qrCodeBase64 = await QRCode.toDataURL(getPublicUrl(user.id), {
+          margin: 1,
+          width: 200,
+          errorCorrectionLevel: 'H'
+        });
+        
+        return `
+          <div class="label">
+            <img src="${qrCodeBase64}" class="qr-img" />
+            <h2 class="name">${user.nome_completo}</h2>
+            <p class="id">ID: ${user.id}</p>
+          </div>
+        `;
+      }));
+
+      const printWindow = window.open('', '_blank');
+      if (!printWindow) return;
+
+      const html = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Todas as Etiquetas - InfoSaúde</title>
+            <style>
+              @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+              body { 
+                margin: 0; 
+                padding: 20px; 
+                background: #f1f5f9;
+                font-family: 'Inter', sans-serif;
+              }
+              .container {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+                gap: 15px;
+                justify-items: center;
+              }
+              .label {
+                width: 280px;
+                background: white;
+                padding: 20px;
+                border-radius: 15px;
+                text-align: center;
+                box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+                border: 1px solid #e2e8f0;
+                page-break-inside: avoid;
+                margin-bottom: 15px;
+              }
+              .qr-img {
+                width: 140px;
+                height: 140px;
+                margin-bottom: 10px;
+              }
+              .name {
+                font-weight: 900;
+                font-size: 16px;
+                color: #0f172a;
+                margin: 0 0 5px 0;
+                text-transform: uppercase;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+              }
+              .id {
+                font-weight: 700;
+                font-size: 13px;
+                color: #0072CE;
+                margin: 0;
+                font-style: italic;
+              }
+              @media print {
+                body { background: white; padding: 10mm; }
+                .container { 
+                  display: block;
+                }
+                .label { 
+                  box-shadow: none; 
+                  border: 1px solid #eee; 
+                  display: inline-block;
+                  margin: 5mm;
+                  vertical-align: top;
+                }
+                @page { size: portrait; margin: 0; }
+              }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              ${labelsHtml.join('')}
+            </div>
+            <script>
+              window.onload = () => {
+                setTimeout(() => {
+                  window.print();
+                }, 1000);
+              };
+            </script>
+          </body>
+        </html>
+      `;
+
+      printWindow.document.write(html);
+      printWindow.document.close();
+    } catch (err) {
+      console.error('Erro ao gerar etiquetas:', err);
+      setError('Erro ao gerar etiquetas para todos os usuários.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handlePrintVirtualCard = () => {
@@ -905,6 +1109,13 @@ export default function AdminDashboard() {
             >
               <Download size={14} /> Backup
             </button>
+            <button
+              onClick={handlePrintAllEtiquetas}
+              className="bg-brand-blue/10 text-brand-blue px-3 py-2 rounded-lg font-bold flex items-center justify-center gap-1.5 hover:bg-brand-blue/20 transition-all text-[10px] uppercase tracking-widest italic font-display border border-brand-blue/20"
+              title="Imprimir Todas Etiquetas"
+            >
+              <Printer size={14} /> Etiquetas
+            </button>
             <label className="bg-slate-100 text-slate-600 px-3 py-2 rounded-lg font-bold flex items-center justify-center gap-1.5 hover:bg-slate-200 transition-all text-[10px] uppercase tracking-widest italic font-display cursor-pointer">
               <Upload size={14} /> Restaurar
               <input type="file" accept=".json" onChange={handleFileImport} className="hidden" />
@@ -1491,7 +1702,7 @@ export default function AdminDashboard() {
               </button>
             </div>
             <div className="p-6 flex flex-col items-center text-center">
-              <div className="bg-white p-4 rounded-[2rem] shadow-2xl shadow-slate-100 border-4 border-brand-blue/10 mb-4">
+              <div id="qr-code-main" className="bg-white p-4 rounded-[2rem] shadow-2xl shadow-slate-100 border-4 border-brand-blue/10 mb-4">
                 <QRCodeSVG 
                   value={getPublicUrl(selectedUser.id)} 
                   size={180}
@@ -1521,7 +1732,7 @@ export default function AdminDashboard() {
                 Este QR Code aponta para a página pública de emergência do usuário. Imprima e cole no cartão de identificação.
               </p>
               <button
-                onClick={() => window.print()}
+                onClick={handlePrintEtiqueta}
                 className="w-full bg-slate-900 text-white font-black py-4 rounded-xl hover:bg-slate-800 transition-all flex items-center justify-center gap-2 uppercase tracking-widest italic font-display shadow-xl shadow-slate-200 mb-3 no-print text-[10px]"
               >
                 <Printer size={18} /> Imprimir Etiqueta
