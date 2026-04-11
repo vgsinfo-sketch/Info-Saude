@@ -263,17 +263,16 @@ export default function PublicProfile() {
         
         const newWindow = window.open();
         if (newWindow) {
-          newWindow.document.write(`
-            <html>
-              <head><title>${anexo.nome}</title></head>
-              <body style="margin:0; display:flex; align-items:center; justify-content:center; background:#f1f5f9;">
-                ${data.mimeType === 'application/pdf' 
-                  ? `<embed src="${base64}" type="application/pdf" width="100%" height="100%">`
-                  : `<img src="${base64}" style="max-width:100%; max-height:100%; object-fit:contain; box-shadow:0 10px 25px -5px rgba(0,0,0,0.1);">`
-                }
-              </body>
-            </html>
-          `);
+          const html = '<html>' +
+            '<head><title>' + anexo.nome + '</title></head>' +
+            '<body style="margin:0; display:flex; align-items:center; justify-content:center; background:#f1f5f9;">' +
+            (data.mimeType === 'application/pdf' 
+              ? '<embed src="' + base64 + '" type="application/pdf" width="100%" height="100%">'
+              : '<img src="' + base64 + '" style="max-width:100%; max-height:100%; object-fit:contain; box-shadow:0 10px 25px -5px rgba(0,0,0,0.1);">') +
+            '</body>' +
+            '</html>';
+          newWindow.document.write(html);
+          newWindow.document.close();
         }
       }
     } catch (err) {

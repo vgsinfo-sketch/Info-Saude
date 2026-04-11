@@ -18,6 +18,7 @@ export default function AdminDashboard() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isQrModalOpen, setIsQrModalOpen] = useState(false);
+  const [isVirtualCardModalOpen, setIsVirtualCardModalOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<Usuario | null>(null);
@@ -96,6 +97,201 @@ export default function AdminDashboard() {
     });
   };
 
+  const handlePrintVirtualCard = () => {
+    if (!selectedUser) return;
+    
+    const qrCodeElement = document.querySelector('#virtual-card-qr svg');
+    if (!qrCodeElement) return;
+    
+    const qrCodeData = new XMLSerializer().serializeToString(qrCodeElement);
+    const qrCodeBase64 = 'data:image/svg+xml;base64,' + btoa(qrCodeData);
+    const publicUrl = getPublicUrl(selectedUser.id);
+
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Cartão Virtual - ${selectedUser.nome_completo}</title>
+          <style>
+            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+            body { 
+              margin: 0; 
+              padding: 0; 
+              display: flex; 
+              justify-content: center; 
+              align-items: center; 
+              min-height: 100vh;
+              background: #f1f5f9;
+              font-family: 'Inter', sans-serif;
+            }
+            .card {
+              width: 800px;
+              height: 506px;
+              position: relative;
+              border-radius: 20px;
+              overflow: hidden;
+              box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+              background: #0072CE; /* Fallback color */
+              background: linear-gradient(135deg, #0072CE 0%, #39B54A 100%);
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+            }
+            .bg-img {
+              position: absolute;
+              inset: 0;
+              width: 100%;
+              height: 100%;
+              object-fit: cover;
+              z-index: 1;
+              /* Se a imagem falhar ou for o placeholder do imgur, ela fica transparente */
+              opacity: 1;
+            }
+            .id-container {
+              position: absolute;
+              top: 12%;
+              left: 29%;
+              width: 53%;
+              height: 10%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              z-index: 10;
+            }
+            .user-name-text {
+              position: absolute;
+              top: 35%;
+              left: 5%;
+              width: 90%;
+              text-align: left;
+              color: white;
+              font-weight: 900;
+              font-size: 36px;
+              z-index: 10;
+              text-shadow: 0 2px 4px rgba(0,0,0,0.6);
+              text-transform: uppercase;
+            }
+            .id-container {
+              position: absolute;
+              top: 48%;
+              left: 5%;
+              width: 90%;
+              display: flex;
+              align-items: center;
+              justify-content: flex-start;
+              z-index: 10;
+            }
+            .id-text {
+              color: white;
+              font-weight: 700;
+              font-size: 24px;
+              font-style: italic;
+              letter-spacing: 0.05em;
+              text-shadow: 0 2px 4px rgba(0,0,0,0.6);
+            }
+            .logo-text {
+              position: absolute;
+              top: 4%;
+              left: 5%;
+              color: white;
+              font-weight: 900;
+              font-size: 48px;
+              font-style: italic;
+              z-index: 10;
+              text-transform: uppercase;
+            }
+            .url-text {
+              position: absolute;
+              bottom: 5%;
+              left: 5%;
+              color: white;
+              font-weight: 700;
+              font-size: 18px;
+              z-index: 10;
+            }
+            .instructions-text {
+              position: absolute;
+              bottom: 12%;
+              left: 5%;
+              width: 55%;
+              color: white;
+              font-size: 14px;
+              font-weight: 600;
+              line-height: 1.4;
+              z-index: 10;
+              text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+            }
+            .qr-container {
+              position: absolute;
+              bottom: 8%;
+              right: 15.5%;
+              width: 18.5%;
+              aspect-ratio: 1;
+              background: white;
+              border-radius: 12px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              padding: 8px;
+              z-index: 10;
+            }
+            .qr-img {
+              width: 100%;
+              height: 100%;
+            }
+            @media print {
+              body { background: white; }
+              .card { box-shadow: none; border: none; }
+              @page { size: landscape; margin: 0; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="card">
+            <img src="https://i.imgur.com/v8pY9pX.png" class="bg-img" id="bgImg" crossorigin="anonymous" />
+            <div class="logo-text">INFO+SAÚDE</div>
+            <div class="user-name-text">${selectedUser.nome_completo}</div>
+            <div class="id-container">
+              <span class="id-text">ID: ${selectedUser.id}</span>
+            </div>
+            <div class="instructions-text">
+              Esse é o seu cartão virtual. Com ele é possível acessar as suas informações de saúde através do site digitando o seu ID ou apontando a câmera do celular para o QR CODE.
+            </div>
+            <div class="url-text">www.infosaudemais.com.br</div>
+            <div class="qr-container">
+              <img src="${qrCodeBase64}" class="qr-img" />
+            </div>
+          </div>
+          <script>
+            const img = document.getElementById('bgImg');
+            
+            const checkImage = () => {
+              if (img.naturalWidth === 161 && img.naturalHeight === 81) {
+                img.style.opacity = '0';
+              }
+            };
+
+            img.onload = checkImage;
+            img.onerror = () => img.style.opacity = '0';
+
+            window.onload = () => {
+              setTimeout(() => {
+                checkImage();
+                window.print();
+                window.close();
+              }, 1000);
+            };
+          </script>
+        </body>
+      </html>
+    `;
+
+    printWindow.document.write(html);
+    printWindow.document.close();
+  };
+
   const handleViewAnexo = async (anexo: Anexo) => {
     if (!selectedUser) return;
     
@@ -111,17 +307,16 @@ export default function AdminDashboard() {
         
         const newWindow = window.open();
         if (newWindow) {
-          newWindow.document.write(`
-            <html>
-              <head><title>${anexo.nome}</title></head>
-              <body style="margin:0; display:flex; align-items:center; justify-content:center; background:#f1f5f9;">
-                ${data.mimeType === 'application/pdf' 
-                  ? `<embed src="${base64}" type="application/pdf" width="100%" height="100%">`
-                  : `<img src="${base64}" style="max-width:100%; max-height:100%; object-fit:contain; box-shadow:0 10px 25px -5px rgba(0,0,0,0.1);">`
-                }
-              </body>
-            </html>
-          `);
+          const html = '<html>' +
+            '<head><title>' + anexo.nome + '</title></head>' +
+            '<body style="margin:0; display:flex; align-items:center; justify-content:center; background:#f1f5f9;">' +
+            (data.mimeType === 'application/pdf' 
+              ? '<embed src="' + base64 + '" type="application/pdf" width="100%" height="100%">'
+              : '<img src="' + base64 + '" style="max-width:100%; max-height:100%; object-fit:contain; box-shadow:0 10px 25px -5px rgba(0,0,0,0.1);">') +
+            '</body>' +
+            '</html>';
+          newWindow.document.write(html);
+          newWindow.document.close();
         }
       }
     } catch (err) {
@@ -866,6 +1061,14 @@ export default function AdminDashboard() {
                           <button 
                             onClick={() => {
                               setSelectedUser(u);
+                              setIsVirtualCardModalOpen(true);
+                            }}
+                            className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all" title="Cartão Virtual">
+                            <CreditCard size={16} />
+                          </button>
+                          <button 
+                            onClick={() => {
+                              setSelectedUser(u);
                               setIsQrModalOpen(true);
                             }}
                             className="p-1.5 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-all" title="QR Code">
@@ -1329,6 +1532,95 @@ export default function AdminDashboard() {
               >
                 Fechar
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Virtual Card Modal */}
+      {isVirtualCardModalOpen && selectedUser && (
+        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in duration-500 no-print">
+          <div className="bg-white rounded-[2rem] w-full max-w-lg shadow-2xl overflow-hidden animate-in zoom-in-95 duration-500 border border-slate-100">
+            <div className="bg-brand-gradient p-6 flex justify-between items-center text-white">
+              <div className="flex items-center gap-3">
+                <div className="bg-white/20 p-2 rounded-xl">
+                  <CreditCard size={20} />
+                </div>
+                <h3 className="text-xl font-black italic font-display uppercase tracking-tighter">Cartão Virtual</h3>
+              </div>
+              <button onClick={() => setIsVirtualCardModalOpen(false)} className="bg-white/20 hover:bg-white/30 p-2 rounded-xl transition-colors">
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="p-8 flex flex-col items-center">
+              {/* Card Preview Container */}
+              <div 
+                id="virtual-card-print"
+                className="relative w-full aspect-[1.58/1] rounded-2xl overflow-hidden shadow-2xl border border-slate-200 bg-brand-gradient"
+              >
+                {/* Background Image */}
+                <img 
+                  src="https://i.imgur.com/v8pY9pX.png" 
+                  alt="Layout Cartão" 
+                  className="absolute inset-0 w-full h-full object-cover z-0"
+                  referrerPolicy="no-referrer"
+                  crossOrigin="anonymous"
+                />
+
+                {/* Logo Text */}
+                <div className="absolute top-[4%] left-[5%] text-white font-black italic text-xl md:text-5xl uppercase z-10">
+                  INFO+SAÚDE
+                </div>
+
+                {/* User Name (H1 style) */}
+                <div className="absolute top-[35%] left-[5%] w-[90%] text-left text-white font-black text-lg md:text-3xl z-10 drop-shadow-lg uppercase">
+                  {selectedUser.nome_completo}
+                </div>
+
+                {/* ID Field (H2 style) - Below Name */}
+                <div className="absolute top-[48%] left-[5%] w-[90%] flex items-center justify-start z-10">
+                  <span className="text-white font-bold text-sm md:text-xl italic font-display tracking-widest drop-shadow-md">
+                    ID: {selectedUser.id}
+                  </span>
+                </div>
+
+                {/* Instructions */}
+                <div className="absolute bottom-[12%] left-[5%] w-[55%] text-white font-bold text-[10px] md:text-[13px] leading-tight z-10 drop-shadow-md">
+                  Esse é o seu cartão virtual. Com ele é possível acessar as suas informações de saúde através do site digitando o seu ID ou apontando a câmera do celular para o QR CODE.
+                </div>
+
+                {/* URL */}
+                <div className="absolute bottom-[5%] left-[5%] text-white font-black text-[11px] md:text-[14px] z-10">
+                  www.infosaudemais.com.br
+                </div>
+
+                {/* QR Code Field - Bottom White Box */}
+                <div id="virtual-card-qr" className="absolute bottom-[8%] right-[15.5%] w-[18.5%] aspect-square bg-white rounded-lg flex items-center justify-center p-1 z-10">
+                  <QRCodeSVG 
+                    value={getPublicUrl(selectedUser.id)} 
+                    size={120} 
+                    level="H" 
+                    includeMargin={false}
+                    className="w-full h-full"
+                  />
+                </div>
+              </div>
+
+              <div className="mt-8 flex gap-3 w-full no-print">
+                <button 
+                  onClick={handlePrintVirtualCard}
+                  className="flex-1 bg-slate-900 text-white font-black py-4 rounded-xl hover:bg-slate-800 transition-all flex items-center justify-center gap-2 uppercase tracking-widest italic font-display shadow-xl shadow-slate-200 text-xs"
+                >
+                  <Printer size={18} /> Imprimir Cartão
+                </button>
+                <button 
+                  onClick={() => setIsVirtualCardModalOpen(false)}
+                  className="flex-1 bg-white text-slate-400 border-2 border-slate-100 font-black py-3 rounded-xl hover:bg-slate-50 transition-all uppercase tracking-widest italic font-display text-xs"
+                >
+                  Fechar
+                </button>
+              </div>
             </div>
           </div>
         </div>
