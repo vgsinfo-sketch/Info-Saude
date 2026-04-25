@@ -6,8 +6,8 @@ import Layout from '../components/Layout';
 import { Plus, Search, User, Trash2, Edit2, QrCode, X, Save, ShieldAlert, CheckCircle2, ExternalLink, Copy, Eye, ArrowLeft, CreditCard, Printer, FileText, Loader2, Download, Upload, Camera } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import QRCode from 'qrcode';
-import { initializeApp, getApps, getApp, deleteApp } from 'firebase/app';
-import { getAuth, createUserWithEmailAndPassword, signOut, updatePassword, updateEmail, signInWithEmailAndPassword, setPersistence, inMemoryPersistence } from 'firebase/auth';
+import { initializeApp, getApps, getApp } from 'firebase/app';
+import { getAuth, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
 import firebaseConfig from '../../firebase-applet-config.json';
 import { Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -918,73 +918,43 @@ export default function AdminDashboard() {
       let authSyncErrorDetail = '';
 
       if (idChanged || cpfChanged) {
-        console.log('Sincronizando Login (Auth)...');
+        console.log('Sincronizando Login (Auth) via servidor...');
         try {
-          let secondaryApp;
-          if (getApps().some(app => app.name === 'PasswordApp')) {
-            secondaryApp = getApp('PasswordApp');
-          } else {
-            secondaryApp = initializeApp(firebaseConfig, 'PasswordApp');
-          }
-          const secondaryAuth = getAuth(secondaryApp);
-          await setPersistence(secondaryAuth, inMemoryPersistence);
-          
-          const oldEmail = `${oldCleanCpf}@infosaude.com`;
           const newEmail = `${cleanCpf}@infosaude.com`;
           
-          let userCredential;
-          let alreadySynced = false;
+          // Get admin token for security
+          const adminToken = await auth.currentUser?.getIdToken();
 
-          try {
-            // Tenta logar com os dados antigos
-            userCredential = await signInWithEmailAndPassword(secondaryAuth, oldEmail, selectedUser.id);
-            console.log('Login Auth (dados antigos) OK.');
-          } catch (err: any) {
-            console.log('Login antigo falhou, procurando sincronia atual...');
-            // Tenta combinações
-            const combos = [
-              { e: newEmail, p: trimmedId },
-              { e: oldEmail, p: trimmedId },
-              { e: newEmail, p: selectedUser.id }
-            ];
+          const response = await fetch('/api/sync-auth', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              uid: selectedUser.uid,
+              email: newEmail,
+              password: trimmedId,
+              adminToken
+            })
+          });
 
-            let found = false;
-            for (const combo of combos) {
-              try {
-                userCredential = await signInWithEmailAndPassword(secondaryAuth, combo.e, combo.p);
-                console.log(`Login com ${combo.e}/${combo.p} OK.`);
-                found = true;
-                if (combo.e === newEmail && combo.p === trimmedId) alreadySynced = true;
-                break;
-              } catch (e) {}
-            }
+          const result = await response.json();
 
-            if (!found) {
-              console.error('Nenhuma credencial funcionou no Auth.');
-              throw err;
-            }
+          if (!response.ok) {
+            throw new Error(result.error || 'Erro desconhecido no servidor');
           }
-          
-          if (!alreadySynced && userCredential) {
-            if (userCredential.user.email !== newEmail) {
-              console.log('Atualizando Email Auth...');
-              await updateEmail(userCredential.user, newEmail);
-            }
-            
-            console.log('Atualizando Senha Auth (ID)...');
-            await updatePassword(userCredential.user, trimmedId);
-          }
-          
-          await signOut(secondaryAuth);
-          console.log('Sincronização Auth terminada.');
+
+          console.log('Sincronização Auth terminada via servidor.');
         } catch (authErr: any) {
-          console.error('Erro sincronia Auth:', authErr);
+          console.error('Erro sincronia Auth via servidor:', authErr);
           authSyncFailed = true;
-          if (authErr.code === 'auth/email-already-in-use') authSyncErrorDetail = ' (CPF já em uso no login)';
-          if (authErr.code === 'auth/wrong-password') authSyncErrorDetail = ' (Erro na senha do sistema de acesso)';
-          if (authErr.code === 'auth/requires-recent-login') authSyncErrorDetail = ' (Segurança: tente atualizar novamente agora)';
           
-          setError(`Atenção: O cadastro foi salvo, mas o sistema de login falhou${authSyncErrorDetail}.`);
+          if (authErr.message?.includes('email-already-in-use')) {
+            authSyncErrorDetail = ' (CPF já em uso no login)';
+          } else {
+            authSyncErrorDetail = ' (Erro de comunicação com o servidor)';
+          }
+          
+          setError(`Atenção: O sistema de login falhou${authSyncErrorDetail}. O cadastro NÃO será atualizado para evitar erros de acesso.`);
+          return; // STOP here if Auth failed, to avoid mismatch
         }
       }
 
@@ -1007,15 +977,12 @@ export default function AdminDashboard() {
       try {
         await setDoc(userRef, cleanData as any, { merge: true });
       } catch (fsErr) {
-        handleFirestoreError(fsErr, 'atualizar documento no banco de dados', `usuarios/${selectedUser.uid}`);
+        console.error('Erro ao salvar no Firestore:', fsErr);
+        setError('Erro ao salvar os dados no banco de dados.');
         return;
       }
       
-      if (authSyncFailed) {
-        setSuccessMessage('Dados salvos no banco, porém o LOGIN não foi atualizado. O usuário deve usar os dados antigos para entrar.');
-      } else {
-        setSuccessMessage('Cadastro atualizado com sucesso!');
-      }
+      setSuccessMessage('Cadastro atualizado com sucesso!');
       setIsSuccessModalOpen(true);
       window.scrollTo({ top: 0, behavior: 'smooth' });
       console.log('Admin success modal triggered');
