@@ -20,7 +20,7 @@ export default function Login() {
     try {
       // Map CPF to a virtual email for Firebase Auth
       const email = `${cpf.replace(/\D/g, '')}@infosaude.com`;
-      const userCredential = await signInWithEmailAndPassword(auth, email, id.trim());
+      const userCredential = await signInWithEmailAndPassword(auth, email, id.trim().toUpperCase());
       console.log('Login successful:', userCredential.user.uid);
       
       // Check if user is admin to redirect accordingly

@@ -7,7 +7,7 @@ import { Plus, Search, User, Trash2, Edit2, QrCode, X, Save, ShieldAlert, CheckC
 import { QRCodeSVG } from 'qrcode.react';
 import QRCode from 'qrcode';
 import { initializeApp, getApps, getApp, deleteApp } from 'firebase/app';
-import { getAuth, createUserWithEmailAndPassword, signOut, updatePassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { getAuth, createUserWithEmailAndPassword, signOut, updatePassword, updateEmail, signInWithEmailAndPassword } from 'firebase/auth';
 import firebaseConfig from '../../firebase-applet-config.json';
 import { Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -886,15 +886,19 @@ export default function AdminDashboard() {
     }
 
     try {
-      const trimmedId = formData.id.trim();
+      const trimmedId = formData.id.trim().toUpperCase();
       const cleanCpf = formData.cpf?.replace(/\D/g, '') || '';
+      const oldCleanCpf = selectedUser.cpf?.replace(/\D/g, '') || '';
       const userRef = doc(db, 'usuarios', selectedUser.uid);
       
-      console.log('Atualizando usuário no Firestore:', selectedUser.uid, { ...formData, cpf: cleanCpf });
+      console.log('Atualizando usuário:', selectedUser.uid, { ...formData, cpf: cleanCpf, id: trimmedId });
       
-      // If ID changed, we should try to update the Auth password
-      if (trimmedId !== selectedUser.id) {
-        console.log('ID changed from', selectedUser.id, 'to', trimmedId, '. Attempting to update Auth password...');
+      // If ID or CPF changed, sync with Auth
+      const idChanged = trimmedId !== selectedUser.id;
+      const cpfChanged = cleanCpf !== oldCleanCpf;
+
+      if (idChanged || cpfChanged) {
+        console.log('ID/CPF changed. Attempting to sync with Auth...');
         try {
           let secondaryApp;
           if (getApps().some(app => app.name === 'PasswordApp')) {
@@ -903,19 +907,28 @@ export default function AdminDashboard() {
             secondaryApp = initializeApp(firebaseConfig, 'PasswordApp');
           }
           const secondaryAuth = getAuth(secondaryApp);
-          const email = `${selectedUser.cpf.replace(/\D/g, '')}@infosaude.com`;
+          const oldEmail = `${oldCleanCpf}@infosaude.com`;
+          const newEmail = `${cleanCpf}@infosaude.com`;
           
-          // Sign in with OLD ID as password
-          console.log('Signing in to secondary app to update password for:', email);
-          const userCredential = await signInWithEmailAndPassword(secondaryAuth, email, selectedUser.id);
-          // Update to NEW ID as password
-          await updatePassword(userCredential.user, trimmedId);
+          // Sign in with OLD credentials
+          console.log('Syncing Auth for:', oldEmail);
+          const userCredential = await signInWithEmailAndPassword(secondaryAuth, oldEmail, selectedUser.id);
+          
+          if (idChanged) {
+            console.log('Updating Password to:', trimmedId);
+            await updatePassword(userCredential.user, trimmedId);
+          }
+          
+          if (cpfChanged) {
+            console.log('Updating Email to:', newEmail);
+            await updateEmail(userCredential.user, newEmail);
+          }
+          
           await signOut(secondaryAuth);
-          console.log('Auth password updated successfully to match new ID.');
+          console.log('Auth sync successful.');
         } catch (authErr: any) {
-          console.error('Failed to update Auth password:', authErr);
-          // We continue but warn
-          setError('O cadastro foi atualizado no banco, mas não foi possível alterar a senha de acesso (ID). O usuário deve usar a senha antiga ou você deve resetar manualmente.');
+          console.error('Auth sync failed:', authErr);
+          setError('O cadastro será atualizado no banco, mas não foi possível sincronizar os dados de login. O usuário continuará usando os dados antigos para entrar até que seja corrigido manualmente.');
         }
       }
 
