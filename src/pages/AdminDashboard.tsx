@@ -7,7 +7,7 @@ import { Plus, Search, User, Trash2, Edit2, QrCode, X, Save, ShieldAlert, CheckC
 import { QRCodeSVG } from 'qrcode.react';
 import QRCode from 'qrcode';
 import { initializeApp, getApps, getApp, deleteApp } from 'firebase/app';
-import { getAuth, createUserWithEmailAndPassword, signOut, updatePassword, updateEmail, signInWithEmailAndPassword } from 'firebase/auth';
+import { getAuth, createUserWithEmailAndPassword, signOut, updatePassword, updateEmail, signInWithEmailAndPassword, setPersistence, inMemoryPersistence } from 'firebase/auth';
 import firebaseConfig from '../../firebase-applet-config.json';
 import { Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -798,9 +798,10 @@ export default function AdminDashboard() {
     try {
       // Clean CPF for consistency
       const cleanCpf = formData.cpf?.replace(/\D/g, '') || '';
+      const trimmedId = (formData.id?.trim() || '').toUpperCase();
       
       // Check if ID already exists
-      const idCheck = usuarios.find(u => u.id === formData.id);
+      const idCheck = usuarios.find(u => u.id.toUpperCase() === trimmedId);
       if (idCheck) {
         setError('Este ID de cartão já está em uso.');
         return;
@@ -814,9 +815,9 @@ export default function AdminDashboard() {
         secondaryApp = initializeApp(firebaseConfig, 'SecondaryApp');
       }
       const secondaryAuth = getAuth(secondaryApp);
+      await setPersistence(secondaryAuth, inMemoryPersistence);
       
       const email = `${cleanCpf}@infosaude.com`;
-      const trimmedId = (formData.id?.trim() || '').toUpperCase();
       const userCredential = await createUserWithEmailAndPassword(secondaryAuth, email, trimmedId);
       const newUserUid = userCredential.user.uid;
 
@@ -897,8 +898,11 @@ export default function AdminDashboard() {
       const idChanged = trimmedId !== selectedUser.id;
       const cpfChanged = cleanCpf !== oldCleanCpf;
 
+      let authSyncFailed = false;
+      let authSyncErrorDetail = '';
+
       if (idChanged || cpfChanged) {
-        console.log('ID/CPF changed. Attempting to sync with Auth...');
+        console.log('ID/CPF mudou. Sincronizando com Auth...');
         try {
           let secondaryApp;
           if (getApps().some(app => app.name === 'PasswordApp')) {
@@ -907,28 +911,65 @@ export default function AdminDashboard() {
             secondaryApp = initializeApp(firebaseConfig, 'PasswordApp');
           }
           const secondaryAuth = getAuth(secondaryApp);
+          await setPersistence(secondaryAuth, inMemoryPersistence);
+          
           const oldEmail = `${oldCleanCpf}@infosaude.com`;
           const newEmail = `${cleanCpf}@infosaude.com`;
           
-          // Sign in with OLD credentials
-          console.log('Syncing Auth for:', oldEmail);
-          const userCredential = await signInWithEmailAndPassword(secondaryAuth, oldEmail, selectedUser.id);
+          let userCredential;
+          let alreadySynced = false;
+
+          try {
+            // Tenta logar com os dados que achamos que estão no Auth (dados do Firestore antes da edição)
+            userCredential = await signInWithEmailAndPassword(secondaryAuth, oldEmail, selectedUser.id);
+            console.log('Login com dados antigos OK.');
+          } catch (err: any) {
+            console.log('Login com dados antigos falhou, procurando sincronia atual...');
+            // Tenta todas as combinações possíveis para encontrar o usuário no Auth
+            const combinations = [
+              { e: newEmail, p: trimmedId },
+              { e: oldEmail, p: trimmedId },
+              { e: newEmail, p: selectedUser.id }
+            ];
+
+            let found = false;
+            for (const combo of combinations) {
+              try {
+                userCredential = await signInWithEmailAndPassword(secondaryAuth, combo.e, combo.p);
+                console.log(`Login com ${combo.e}/${combo.p} OK.`);
+                found = true;
+                if (combo.e === newEmail && combo.p === trimmedId) alreadySynced = true;
+                break;
+              } catch (e) {}
+            }
+
+            if (!found) {
+              console.error('Nenhuma combinação de login funcionou.');
+              throw err;
+            }
+          }
           
-          if (idChanged) {
-            console.log('Updating Password to:', trimmedId);
+          if (!alreadySynced && userCredential) {
+            // Sincroniza o que for necessário
+            if (userCredential.user.email !== newEmail) {
+              console.log('Atualizando Email para:', newEmail);
+              await updateEmail(userCredential.user, newEmail);
+            }
+            
+            console.log('Atualizando Senha (ID) para:', trimmedId);
             await updatePassword(userCredential.user, trimmedId);
           }
           
-          if (cpfChanged) {
-            console.log('Updating Email to:', newEmail);
-            await updateEmail(userCredential.user, newEmail);
-          }
-          
           await signOut(secondaryAuth);
-          console.log('Auth sync successful.');
+          console.log('Sincronização Auth concluída.');
         } catch (authErr: any) {
-          console.error('Auth sync failed:', authErr);
-          setError('O cadastro será atualizado no banco, mas não foi possível sincronizar os dados de login. O usuário continuará usando os dados antigos para entrar até que seja corrigido manualmente.');
+          console.error('Falha na sincronização Auth:', authErr);
+          authSyncFailed = true;
+          if (authErr.code === 'auth/email-already-in-use') authSyncErrorDetail = ' (O CPF já está em uso por outro usuário)';
+          if (authErr.code === 'auth/wrong-password') authSyncErrorDetail = ' (Senha/ID incorreta no sistema de acesso)';
+          if (authErr.code === 'auth/requires-recent-login') authSyncErrorDetail = ' (Sessão expirada, tente novamente em instantes)';
+          
+          setError(`Atenção: O cadastro foi atualizado no banco, mas o SISTEMA DE LOGIN não pôde ser sincronizado${authSyncErrorDetail}.`);
         }
       }
 
@@ -945,15 +986,13 @@ export default function AdminDashboard() {
         plano_saude_tipo: formData.plano_saude_tipo || ''
       };
 
-      // Remove undefined values to prevent Firestore errors
+      // Remove undefined values
       const cleanData = Object.entries(finalData).reduce((acc, [key, value]) => {
         if (value !== undefined) {
           acc[key] = value;
         }
         return acc;
       }, {} as Record<string, any>);
-
-      console.log('Dados finais para atualização no Firestore:', cleanData);
 
       try {
         await setDoc(userRef, cleanData as any, { merge: true });
@@ -962,7 +1001,11 @@ export default function AdminDashboard() {
         return;
       }
       
-      setSuccessMessage('Cadastro atualizado com sucesso!');
+      if (authSyncFailed) {
+        setSuccessMessage('Dados salvos no banco, porém o LOGIN não foi sincronizado. Oriente o usuário a usar os dados anteriores.');
+      } else {
+        setSuccessMessage('Cadastro atualizado com sucesso!');
+      }
       setIsSuccessModalOpen(true);
       window.scrollTo({ top: 0, behavior: 'smooth' });
       console.log('Admin success modal triggered');
