@@ -881,8 +881,8 @@ export default function AdminDashboard() {
     setError('');
     setSuccess('');
 
-    if (!selectedUser || !formData.nome_completo || !formData.id) {
-      setError('Por favor, preencha os campos obrigatórios (Nome e ID).');
+    if (!selectedUser || !formData.nome_completo || !formData.id || !formData.cpf) {
+      setError('Por favor, preencha os campos obrigatórios (Nome, ID e CPF).');
       return;
     }
 
@@ -894,15 +894,31 @@ export default function AdminDashboard() {
       
       console.log('Atualizando usuário:', selectedUser.uid, { ...formData, cpf: cleanCpf, id: trimmedId });
       
-      // If ID or CPF changed, sync with Auth
+      // If ID or CPF changed, check for duplications
       const idChanged = trimmedId !== selectedUser.id;
       const cpfChanged = cleanCpf !== oldCleanCpf;
+
+      if (cpfChanged) {
+        const cpfCheck = usuarios.find(u => u.cpf?.replace(/\D/g, '') === cleanCpf && u.uid !== selectedUser.uid);
+        if (cpfCheck) {
+          setError('Este CPF já está sendo usado por outro usuário.');
+          return;
+        }
+      }
+
+      if (idChanged) {
+        const idCheck = usuarios.find(u => u.id.toUpperCase() === trimmedId && u.uid !== selectedUser.uid);
+        if (idCheck) {
+          setError('Este ID de cartão já está sendo usado por outro usuário.');
+          return;
+        }
+      }
 
       let authSyncFailed = false;
       let authSyncErrorDetail = '';
 
       if (idChanged || cpfChanged) {
-        console.log('ID/CPF mudou. Sincronizando com Auth...');
+        console.log('Sincronizando Login (Auth)...');
         try {
           let secondaryApp;
           if (getApps().some(app => app.name === 'PasswordApp')) {
@@ -920,20 +936,20 @@ export default function AdminDashboard() {
           let alreadySynced = false;
 
           try {
-            // Tenta logar com os dados que achamos que estão no Auth (dados do Firestore antes da edição)
+            // Tenta logar com os dados antigos
             userCredential = await signInWithEmailAndPassword(secondaryAuth, oldEmail, selectedUser.id);
-            console.log('Login com dados antigos OK.');
+            console.log('Login Auth (dados antigos) OK.');
           } catch (err: any) {
-            console.log('Login com dados antigos falhou, procurando sincronia atual...');
-            // Tenta todas as combinações possíveis para encontrar o usuário no Auth
-            const combinations = [
+            console.log('Login antigo falhou, procurando sincronia atual...');
+            // Tenta combinações
+            const combos = [
               { e: newEmail, p: trimmedId },
               { e: oldEmail, p: trimmedId },
               { e: newEmail, p: selectedUser.id }
             ];
 
             let found = false;
-            for (const combo of combinations) {
+            for (const combo of combos) {
               try {
                 userCredential = await signInWithEmailAndPassword(secondaryAuth, combo.e, combo.p);
                 console.log(`Login com ${combo.e}/${combo.p} OK.`);
@@ -944,51 +960,45 @@ export default function AdminDashboard() {
             }
 
             if (!found) {
-              console.error('Nenhuma combinação de login funcionou.');
+              console.error('Nenhuma credencial funcionou no Auth.');
               throw err;
             }
           }
           
           if (!alreadySynced && userCredential) {
-            // Sincroniza o que for necessário
             if (userCredential.user.email !== newEmail) {
-              console.log('Atualizando Email para:', newEmail);
+              console.log('Atualizando Email Auth...');
               await updateEmail(userCredential.user, newEmail);
             }
             
-            console.log('Atualizando Senha (ID) para:', trimmedId);
+            console.log('Atualizando Senha Auth (ID)...');
             await updatePassword(userCredential.user, trimmedId);
           }
           
           await signOut(secondaryAuth);
-          console.log('Sincronização Auth concluída.');
+          console.log('Sincronização Auth terminada.');
         } catch (authErr: any) {
-          console.error('Falha na sincronização Auth:', authErr);
+          console.error('Erro sincronia Auth:', authErr);
           authSyncFailed = true;
-          if (authErr.code === 'auth/email-already-in-use') authSyncErrorDetail = ' (O CPF já está em uso por outro usuário)';
-          if (authErr.code === 'auth/wrong-password') authSyncErrorDetail = ' (Senha/ID incorreta no sistema de acesso)';
-          if (authErr.code === 'auth/requires-recent-login') authSyncErrorDetail = ' (Sessão expirada, tente novamente em instantes)';
+          if (authErr.code === 'auth/email-already-in-use') authSyncErrorDetail = ' (CPF já em uso no login)';
+          if (authErr.code === 'auth/wrong-password') authSyncErrorDetail = ' (Erro na senha do sistema de acesso)';
+          if (authErr.code === 'auth/requires-recent-login') authSyncErrorDetail = ' (Segurança: tente atualizar novamente agora)';
           
-          setError(`Atenção: O cadastro foi atualizado no banco, mas o SISTEMA DE LOGIN não pôde ser sincronizado${authSyncErrorDetail}.`);
+          setError(`Atenção: O cadastro foi salvo, mas o sistema de login falhou${authSyncErrorDetail}.`);
         }
       }
 
-      const { uid, ...updateData } = formData;
-      const email = `${cleanCpf}@infosaude.com`;
-      
       const finalData = {
-        ...updateData,
+        ...formData,
         cpf: cleanCpf,
-        email: email,
+        email: `${cleanCpf}@infosaude.com`,
         id: trimmedId,
-        plano_saude_nome: formData.plano_saude_nome || '',
-        plano_saude_numero: formData.plano_saude_numero || '',
-        plano_saude_tipo: formData.plano_saude_tipo || ''
+        updatedAt: new Date().toISOString()
       };
 
-      // Remove undefined values
+      // Remove unwanted and undefined fields
       const cleanData = Object.entries(finalData).reduce((acc, [key, value]) => {
-        if (value !== undefined) {
+        if (value !== undefined && key !== 'uid') {
           acc[key] = value;
         }
         return acc;
@@ -1002,7 +1012,7 @@ export default function AdminDashboard() {
       }
       
       if (authSyncFailed) {
-        setSuccessMessage('Dados salvos no banco, porém o LOGIN não foi sincronizado. Oriente o usuário a usar os dados anteriores.');
+        setSuccessMessage('Dados salvos no banco, porém o LOGIN não foi atualizado. O usuário deve usar os dados antigos para entrar.');
       } else {
         setSuccessMessage('Cadastro atualizado com sucesso!');
       }
