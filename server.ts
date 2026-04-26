@@ -3,18 +3,6 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { createServer as createViteServer } from 'vite';
 import fs from 'fs';
-import admin from 'firebase-admin';
-
-// Initialize Firebase Admin
-const firebaseConfig = JSON.parse(fs.readFileSync('./firebase-applet-config.json', 'utf8'));
-
-if (!admin.apps.length) {
-  admin.initializeApp({
-    projectId: firebaseConfig.projectId,
-  });
-}
-
-const auth = admin.auth();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -30,31 +18,9 @@ async function startServer() {
     next();
   });
 
-  // API to sync Auth from admin dashboard
-  app.post('/api/sync-auth', async (req, res) => {
-    const { uid, email, password, adminToken } = req.body;
-
-    if (!uid || !email || !password || !adminToken) {
-      return res.status(400).json({ error: 'Parâmetros ausentes' });
-    }
-
-    try {
-      // Verify admin token
-      await auth.verifyIdToken(adminToken);
-
-      console.log(`Syncing Auth for UID: ${uid} to Email: ${email}`);
-      await auth.updateUser(uid, {
-        email: email,
-        password: password,
-      });
-
-      res.json({ success: true });
-    } catch (error: any) {
-      console.error('Error syncing Auth:', error);
-      let message = 'Erro ao sincronizar dados de acesso';
-      if (error.code === 'auth/email-already-in-use') message = 'Este CPF já está sendo usado no sistema de login';
-      res.status(500).json({ error: message, code: error.code });
-    }
+  // API health check
+  app.get('/api/health', (req, res) => {
+    res.json({ status: 'ok' });
   });
 
   // Vite middleware for development

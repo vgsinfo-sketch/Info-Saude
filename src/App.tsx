@@ -171,7 +171,7 @@ export default function App() {
         console.log('Fallback 3: No match.');
 
         // 4. Special case for master admins
-        const masterEmails = ['admin@admin.com', 'vgsinfo@gmail.com'];
+        const masterEmails = ['admin@infosaude.com', 'admin@admin.com', 'vgsinfo@gmail.com'];
         if (masterEmails.includes(currentUser.email || '')) {
           console.log('Master admin detected, providing virtual profile.');
           setUserData({
@@ -241,6 +241,7 @@ export default function App() {
   }, [loading, userData, user]);
 
   const isAdmin = userData?.role === 'admin' || 
+                  user?.email === 'admin@infosaude.com' || 
                   user?.email === 'admin@admin.com' || 
                   user?.email === 'vgsinfo@gmail.com';
 
@@ -285,8 +286,6 @@ export default function App() {
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/login" element={<Login />} />
           <Route path="/admin-login" element={<AdminLogin />} />
-          
-          <Route path="/master-admin/*" element={<AdminDashboard />} />
           
           <Route path="/admin/*" element={
             isAdmin ? <AdminDashboard /> : <Navigate to="/admin-login" replace />

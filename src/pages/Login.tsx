@@ -19,21 +19,42 @@ export default function Login() {
 
     try {
       // Map CPF to a virtual email for Firebase Auth
-      const email = `${cpf.replace(/\D/g, '')}@infosaude.com`;
-      const userCredential = await signInWithEmailAndPassword(auth, email, id.trim().toUpperCase());
+      const cleanCpf = cpf.replace(/\D/g, '');
+      const trimmedId = id.trim().toUpperCase();
+      
+      if (cleanCpf.length !== 11) {
+        setError('CPF deve conter 11 dígitos.');
+        setLoading(false);
+        return;
+      }
+
+      if (trimmedId.length < 6) {
+        setError('O ID do seu cartão deve ter pelo menos 6 caracteres.');
+        setLoading(false);
+        return;
+      }
+
+      const email = `${cleanCpf}@infosaude.com`;
+      const userCredential = await signInWithEmailAndPassword(auth, email, trimmedId);
       console.log('Login successful:', userCredential.user.uid);
       
       // Check if user is admin to redirect accordingly
-      // We'll wait a bit for the App.tsx listener to update userData if possible, 
-      // but for immediate redirect we can check the email
-      if (email === 'admin@admin.com' || email === 'vgsinfo@gmail.com') {
+      if (email === 'admin@infosaude.com' || email === 'admin@admin.com' || email === 'vgsinfo@gmail.com') {
         navigate('/admin');
       } else {
         navigate('/dashboard');
       }
     } catch (err: any) {
-      console.error(err);
-      setError('CPF ou ID inválidos. Verifique seus dados e tente novamente.');
+      console.error('Login error detail:', err);
+      if (err.code === 'auth/invalid-credential') {
+        setError('Dados de acesso incorretos. Verifique seu CPF e ID do cartão. Certifique-se de que o ID está correto (Ex: INFO-123).');
+      } else if (err.code === 'auth/user-not-found') {
+        setError('Usuário não localizado. Verifique se o CPF e ID estão digitados corretamente.');
+      } else if (err.code === 'auth/network-request-failed') {
+        setError('Falha de conexão. Verifique sua internet.');
+      } else {
+        setError('Erro ao validar acesso. Tente novamente em instantes.');
+      }
     } finally {
       setLoading(false);
     }

@@ -770,6 +770,54 @@ export default function PublicProfile() {
           </div>
         </section>
 
+        {/* Attachments Section - Moved up for higher visibility */}
+        <section className="space-y-6">
+          <div className="section-title">Documentos e Laudos Médicos</div>
+          {userData.anexos && userData.anexos.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {userData.anexos.map((anexo) => (
+                  <div 
+                    key={anexo.id}
+                    className="flex items-center gap-4 p-5 bg-white rounded-3xl border border-slate-100 shadow-sm hover:shadow-xl hover:shadow-slate-200/40 transition-all group w-full"
+                  >
+                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 ${anexo.tipo === 'laudo' ? 'bg-blue-50 text-blue-600' : 'bg-emerald-50 text-emerald-600'}`}>
+                      {loadingAnexo ? <Loader2 size={24} className="animate-spin" /> : <FileText size={28} />}
+                    </div>
+                    <div className="flex-1 overflow-hidden">
+                      <p className="text-sm font-black text-slate-900 truncate uppercase tracking-tight">{anexo.nome}</p>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
+                        {anexo.tipo === 'laudo' ? 'Laudo Médico oficial' : 'Receituário Digital'} • {new Date(anexo.data).toLocaleDateString('pt-BR')}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-1.5 no-print">
+                      <button
+                        onClick={() => handleViewAnexo(anexo)}
+                        disabled={loadingAnexo}
+                        className="p-3 bg-slate-50 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all active:scale-90"
+                        title="Visualizar Documento"
+                      >
+                        <ExternalLink size={20} />
+                      </button>
+                      <button
+                        onClick={() => handleDownloadAnexo(anexo)}
+                        disabled={loadingAnexo}
+                        className="p-3 bg-slate-50 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all active:scale-90"
+                        title="Baixar Arquivo"
+                      >
+                        <Download size={20} />
+                      </button>
+                    </div>
+                  </div>
+              ))}
+            </div>
+          ) : (
+            <div className="p-10 text-center bg-slate-50/50 rounded-[2.5rem] border-2 border-dashed border-slate-100">
+              <Paperclip size={40} className="mx-auto text-slate-200 mb-4" />
+              <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">Nenhum laudo ou receita anexada ao perfil.</p>
+            </div>
+          )}
+        </section>
+
         {/* Emergency Contacts - High Impact Section */}
         <section className="space-y-6">
           <div className="section-title">Contatos de Emergência</div>
@@ -801,48 +849,6 @@ export default function PublicProfile() {
           </div>
         </section>
 
-        {/* Attachments Section - For Emergency Reference */}
-        {userData.anexos && userData.anexos.length > 0 && (
-          <section className="space-y-6">
-            <div className="section-title">Documentos Anexos (Laudos e Receitas)</div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {userData.anexos.map((anexo) => (
-                  <div 
-                    key={anexo.id}
-                    className="flex items-center gap-4 p-4 bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all group w-full"
-                  >
-                    <div className={`p-3 rounded-xl shrink-0 ${anexo.tipo === 'laudo' ? 'bg-blue-50 text-blue-600' : 'bg-emerald-50 text-emerald-600'}`}>
-                      {loadingAnexo ? <Loader2 size={24} className="animate-spin" /> : <FileText size={24} />}
-                    </div>
-                    <div className="flex-1 overflow-hidden">
-                      <p className="text-sm font-bold text-slate-900 truncate">{anexo.nome}</p>
-                      <p className="text-[10px] text-slate-400 uppercase tracking-widest">
-                        {anexo.tipo === 'laudo' ? 'Laudo Médico' : 'Receita'} • {new Date(anexo.data).toLocaleDateString('pt-BR')}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={() => handleViewAnexo(anexo)}
-                        disabled={loadingAnexo}
-                        className="p-2 text-slate-400 hover:text-brand-blue transition-colors"
-                        title="Visualizar"
-                      >
-                        <ExternalLink size={18} />
-                      </button>
-                      <button
-                        onClick={() => handleDownloadAnexo(anexo)}
-                        disabled={loadingAnexo}
-                        className="p-2 text-slate-400 hover:text-brand-green transition-colors"
-                        title="Baixar"
-                      >
-                        <Download size={18} />
-                      </button>
-                    </div>
-                  </div>
-              ))}
-            </div>
-          </section>
-        )}
 
         {/* Observations Section */}
         {userData.observacoes && (

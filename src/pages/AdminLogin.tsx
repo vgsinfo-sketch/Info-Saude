@@ -7,8 +7,8 @@ import Layout from '../components/Layout';
 import { ShieldCheck, Mail, Lock, ArrowLeft, Eye, EyeOff } from 'lucide-react';
 
 export default function AdminLogin() {
-  const [email, setEmail] = useState('admin@admin.com');
-  const [password, setPassword] = useState('admin0102@');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -44,33 +44,59 @@ export default function AdminLogin() {
     console.log('Attempting admin login with email:', trimmedEmail);
 
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, trimmedEmail, password);
-      console.log('Login successful:', userCredential.user.email);
-      
-      if (trimmedEmail === 'admin@admin.com' || trimmedEmail === 'vgsinfo@gmail.com') {
-        // Master admins bypass verification for initial setup ease
+      try {
+        const userCredential = await signInWithEmailAndPassword(auth, trimmedEmail, password);
+        console.log('Login successful:', userCredential.user.email);
+        
+        if (trimmedEmail === 'admin@infosaude.com' || trimmedEmail === 'vgsinfo@gmail.com') {
+          // Master admins bypass verification for initial setup ease
+          navigate('/admin');
+          return;
+        }
+        
+        if (!userCredential.user.emailVerified) {
+          setError('Seu e-mail ainda não foi verificado. Verifique sua caixa de entrada.');
+          setLoading(false); // Added missing loading state reset
+          return;
+        }
+        
         navigate('/admin');
-        return;
+      } catch (err: any) {
+        // If master admin doesn't exist, create it automatically
+        if ((trimmedEmail === 'admin@infosaude.com' || trimmedEmail === 'vgsinfo@gmail.com') && 
+            (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential')) {
+          console.log('Master admin not found or invalid. Attempting to ensure existence...');
+          try {
+            await createUserWithEmailAndPassword(auth, trimmedEmail, password);
+            console.log('Master admin account created/initialized.');
+            navigate('/admin');
+            return;
+          } catch (createErr: any) {
+            console.error('Auto-initialization failed:', createErr);
+            // If email already in use, then it's a real invalid-credential/wrong-password
+            if (createErr.code !== 'auth/email-already-in-use') {
+              throw err;
+            }
+          }
+        }
+        throw err;
       }
-      
-      if (!userCredential.user.emailVerified) {
-        setError('Seu e-mail ainda não foi verificado. Verifique sua caixa de entrada.');
-        return;
-      }
-      
-      navigate('/admin');
     } catch (err: any) {
       console.error('Login error:', err);
-      if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
-        if (trimmedEmail === 'admin@admin.com') {
-          setError('Usuário não encontrado ou senha incorreta. Se você esqueceu a senha, entre em contato com o suporte técnico para resetar a conta mestre.');
+      const isInvalid = err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password';
+      
+      if (isInvalid) {
+        if (trimmedEmail === 'admin@infosaude.com') {
+          setError('Acesso administrativo negado. A senha pode estar incorreta ou o sistema ainda está ativando a API do Google (isso pode levar alguns minutos após a ativação no console).');
         } else {
-          setError('Email ou senha incorretos. Verifique suas credenciais.');
+          setError('E-mail ou senha incorretos. Verifique suas credenciais administrativas.');
         }
       } else if (err.code === 'auth/operation-not-allowed') {
         setError('O login por E-mail/Senha não está ativado no seu Console do Firebase.');
+      } else if (err.message && err.message.includes('identitytoolkit.googleapis.com')) {
+        setError('O sistema ainda está ativando as permissões do Google (API Identity Toolkit). Por favor, aguarde de 5 a 10 minutos após a ativação no console e tente novamente.');
       } else {
-        setError('Erro ao fazer login: ' + err.message);
+        setError('Erro ao fazer login: ' + (err.message || 'Erro desconhecido'));
       }
     } finally {
       setLoading(false);
@@ -79,7 +105,7 @@ export default function AdminLogin() {
 
   const handleCreateAdmin = async () => {
     const trimmedEmail = email.trim().toLowerCase();
-    if (trimmedEmail !== 'admin@admin.com' && trimmedEmail !== 'vgsinfo@gmail.com') {
+    if (trimmedEmail !== 'admin@infosaude.com' && trimmedEmail !== 'vgsinfo@gmail.com') {
       setError('Apenas o e-mail mestre pode ser auto-cadastrado.');
       return;
     }
@@ -113,7 +139,7 @@ export default function AdminLogin() {
     } catch (err: any) {
       console.error('Setup error:', err);
       if (err.code === 'auth/email-already-in-use') {
-        setError('Este e-mail já está cadastrado. Tente fazer login ou use uma senha diferente se estiver tentando criar agora.');
+        setError('Esta conta mestre já foi configurada anteriormente. Por favor, tente apenas fazer o login com a senha que você definiu.');
       } else if (err.code === 'auth/operation-not-allowed') {
         setError('O login por E-mail/Senha não está ativado no seu Console do Firebase.');
       } else {
@@ -206,29 +232,11 @@ export default function AdminLogin() {
                 {loading ? 'ENTRANDO...' : 'ACESSAR PAINEL'}
               </button>
 
-              <button
-                type="button"
-                onClick={() => navigate('/master-admin')}
-                className="w-full bg-brand-gradient hover:opacity-90 text-white font-black py-4 rounded-[2rem] shadow-xl transition-all active:scale-[0.98] flex items-center justify-center gap-3 text-sm uppercase font-display italic tracking-widest"
-              >
-                <ShieldCheck size={18} /> ENTRAR SEM SENHA (EMERGÊNCIA)
-              </button>
-
               <div className="flex flex-col gap-2">
-                {(email === 'admin@admin.com' || email === 'vgsinfo@gmail.com') && (
-                  <button
-                    type="button"
-                    onClick={handleCreateAdmin}
-                    className="w-full mt-2 text-blue-600 font-bold text-xs hover:underline uppercase tracking-widest"
-                  >
-                    Configurar Conta Mestre
-                  </button>
-                )}
-                
                 <button
                   type="button"
                   onClick={handleResetPassword}
-                  className="w-full text-slate-400 font-bold text-[10px] hover:text-brand-blue transition-colors uppercase tracking-widest"
+                  className="w-full text-slate-400 font-bold text-[10px] hover:text-brand-blue transition-colors uppercase tracking-widest mt-4"
                 >
                   Esqueci a senha / Recuperar Acesso
                 </button>

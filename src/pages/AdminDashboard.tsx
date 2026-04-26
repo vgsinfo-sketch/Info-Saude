@@ -7,7 +7,7 @@ import { Plus, Search, User, Trash2, Edit2, QrCode, X, Save, ShieldAlert, CheckC
 import { QRCodeSVG } from 'qrcode.react';
 import QRCode from 'qrcode';
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getAuth, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
+import { getAuth, createUserWithEmailAndPassword, signOut, setPersistence, inMemoryPersistence, signInWithEmailAndPassword, deleteUser } from 'firebase/auth';
 import firebaseConfig from '../../firebase-applet-config.json';
 import { Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -51,6 +51,8 @@ export default function AdminDashboard() {
   const [success, setSuccess] = useState('');
   const [deleteConfirmAnexo, setDeleteConfirmAnexo] = useState<Anexo | null>(null);
   const [loadingAnexo, setLoadingAnexo] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   const compressImage = (file: File): Promise<string> => {
     return new Promise((resolve) => {
@@ -620,6 +622,66 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleAdminFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, tipo: 'laudo' | 'receita', user: Usuario) => {
+    const originalFile = e.target.files?.[0];
+    if (!originalFile || !user) return;
+
+    setUploading(true);
+    setUploadProgress(20);
+    setError('');
+
+    try {
+      // Compress and get Base64
+      const base64 = await compressImage(originalFile);
+      setUploadProgress(60);
+
+      // Validar tamanho (máximo 1MB para Firestore document)
+      if (base64.length > 1000000) {
+        setError('O arquivo é muito grande mesmo após compressão. Tente uma imagem menor ou um PDF otimizado.');
+        setUploading(false);
+        return;
+      }
+
+      const fileId = Date.now().toString();
+      const docId = user.uid || user.id;
+      
+      // Save content to subcollection
+      const contentRef = doc(db, 'usuarios', docId, 'anexos_data', fileId);
+      await setDoc(contentRef, {
+        content: base64,
+        mimeType: originalFile.type || (originalFile.name.endsWith('.pdf') ? 'application/pdf' : 'image/jpeg')
+      });
+      setUploadProgress(90);
+
+      const newAnexo: Anexo = {
+        id: fileId,
+        nome: originalFile.name,
+        data: new Date().toISOString(),
+        tipo: tipo
+      };
+
+      const updatedAnexos = [...(user.anexos || []), newAnexo];
+      
+      // Salvar metadados no documento principal
+      const userRef = doc(db, 'usuarios', docId);
+      await setDoc(userRef, { anexos: updatedAnexos }, { merge: true });
+      
+      // Update local selected user state
+      setSelectedUser({ ...user, anexos: updatedAnexos });
+      
+      setUploadProgress(100);
+      e.target.value = '';
+    } catch (err: any) {
+      console.error('Erro no upload (admin):', err);
+      setError('Erro ao enviar arquivo: ' + (err.message || 'Tente novamente.'));
+    } finally {
+      setTimeout(() => {
+        setUploading(false);
+        setUploadProgress(0);
+      }, 500);
+    }
+  };
+
   const handleFirestoreError = (err: any, operation: string, path: string) => {
     const errInfo = {
       error: err.message || String(err),
@@ -754,25 +816,58 @@ export default function AdminDashboard() {
     setIsSeedModalOpen(false);
     setLoading(true);
     try {
+      // MASTER ID para facilitar testes
+      const testUid = 'TEST_MASTER_UID';
+      const testCardId = 'TEST123456';
+      
       const testUser: Usuario = {
-        uid: 'TEST_USER_' + Date.now(),
-        id: 'TEST123',
-        nome_completo: 'Usuário de Teste InfoSaúde',
-        cpf: '123.456.789-00',
-        data_nascimento: '1990-01-01',
+        uid: testUid,
+        id: testCardId,
+        nome_completo: 'PACIENTE TESTE SISTEMA',
+        cpf: '12345678900',
+        data_nascimento: '1995-05-20',
         sexo: 'Masculino',
-        tipo_sanguineo: 'O+',
-        alergias: 'Nenhuma',
-        medicamentos: 'Nenhum',
-        condicoes: 'Saudável',
-        contato_emergencia_nome: 'Emergência',
-        contato_emergencia_tel: '(00) 00000-0000',
+        tipo_sanguineo: 'AB+',
+        alergias: 'Penicilina, Corantes, Látex',
+        medicamentos: 'Losartana 50mg, AAS 100mg',
+        condicoes: 'Hipertenso, Diabético Tipo 2',
+        cartao_sus: '123456789012345',
+        contatos_emergencia: 'Dra. Ana (Médica) - (11) 98888-7777\nRicardo (Esposo) - (11) 97777-6666',
+        plano_saude_nome: 'BRADESCO SAÚDE TOP',
+        plano_saude_numero: '00998877665544',
+        plano_saude_tipo: 'Nacional Plus',
         role: 'user',
-        email: 'teste@infosaude.com'
+        email: 'teste_master@infosaude.com',
+        anexos: [
+          {
+            id: 'sample-laudo-1',
+            nome: 'Laudo Cardiológico - Checkup.pdf',
+            data: new Date().toISOString(),
+            tipo: 'laudo'
+          },
+          {
+            id: 'sample-receita-1',
+            nome: 'Receita Médica - Uso Contínuo.jpg',
+            data: new Date().toISOString(),
+            tipo: 'receita'
+          }
+        ],
+        data_cadastro: new Date().toISOString().split('T')[0],
+        data_validade: '2030-12-31'
       };
       
-      await setDoc(doc(db, 'usuarios', testUser.uid), testUser);
-      setSuccess('Usuário de teste criado com sucesso! Se ele não aparecer na lista, verifique as regras do Firestore.');
+      // Seed subcollection content
+      await setDoc(doc(db, 'usuarios', testUid, 'anexos_data', 'sample-laudo-1'), {
+        content: 'data:application/pdf;base64,JVBERi0xLjQKJ...[SAMPLE]...',
+        mimeType: 'application/pdf'
+      });
+      await setDoc(doc(db, 'usuarios', testUid, 'anexos_data', 'sample-receita-1'), {
+        content: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABA...[SAMPLE]...',
+        mimeType: 'image/jpeg'
+      });
+
+      await setDoc(doc(db, 'usuarios', testUid), testUser);
+      setSuccess(`Usuário MASTER (${testCardId}) criado com sucesso!`);
     } catch (err: any) {
       console.error('Erro ao criar usuário de teste:', err);
       setError('Erro ao criar usuário de teste: ' + err.message);
@@ -804,6 +899,11 @@ export default function AdminDashboard() {
       const idCheck = usuarios.find(u => u.id.toUpperCase() === trimmedId);
       if (idCheck) {
         setError('Este ID de cartão já está em uso.');
+        return;
+      }
+
+      if (trimmedId.length < 6) {
+        setError('O ID do cartão deve ter pelo menos 6 caracteres (limitação do sistema de acesso).');
         return;
       }
 
@@ -856,7 +956,7 @@ export default function AdminDashboard() {
       // Cleanup secondary app
       await signOut(secondaryAuth);
       
-      setSuccessMessage('Usuário criado com sucesso!');
+      setSuccessMessage('O novo registro foi salvo com sucesso no banco de dados.');
       setIsSuccessModalOpen(true);
       window.scrollTo({ top: 0, behavior: 'smooth' });
       console.log('Admin success modal triggered (create)');
@@ -872,7 +972,11 @@ export default function AdminDashboard() {
       });
     } catch (err: any) {
       console.error(err);
-      setError('Erro ao criar usuário: ' + (err.message || 'Erro desconhecido'));
+      if (err.code === 'auth/email-already-in-use') {
+        setError('Este CPF já possui uma conta de acesso vinculada no sistema. Se o usuário não aparece na lista, ele pode ter sido excluído parcialmente. Tente usar a busca ou verifique se o CPF está correto.');
+      } else {
+        setError('Erro ao criar usuário: ' + (err.message || 'Erro desconhecido'));
+      }
     }
   };
 
@@ -880,9 +984,11 @@ export default function AdminDashboard() {
     e.preventDefault();
     setError('');
     setSuccess('');
+    setLoading(true);
 
     if (!selectedUser || !formData.nome_completo || !formData.id || !formData.cpf) {
       setError('Por favor, preencha os campos obrigatórios (Nome, ID e CPF).');
+      setLoading(false);
       return;
     }
 
@@ -914,47 +1020,133 @@ export default function AdminDashboard() {
         }
       }
 
+      if (trimmedId.length < 6) {
+        setError('O NOVO ID do cartão deve ter pelo menos 6 caracteres.');
+        return;
+      }
+
       let authSyncFailed = false;
       let authSyncErrorDetail = '';
 
       if (idChanged || cpfChanged) {
-        console.log('Sincronizando Login (Auth) via servidor...');
+        setLoading(true);
+        console.log('Iniciando atualização do usuário UID:', selectedUser.uid);
+        if (!selectedUser.uid) {
+          throw new Error('Erro interno: UID do usuário não localizado.');
+        }
+
         try {
           const newEmail = `${cleanCpf}@infosaude.com`;
-          
-          // Get admin token for security
-          const adminToken = await auth.currentUser?.getIdToken();
+          const oldEmail = `${oldCleanCpf}@infosaude.com`;
+          const oldPassword = selectedUser.id;
 
-          const response = await fetch('/api/sync-auth', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              uid: selectedUser.uid,
-              email: newEmail,
-              password: trimmedId,
-              adminToken
-            })
-          });
+          console.log(`[ClientSync] Iniciando sincronização via cliente: ${oldEmail} -> ${newEmail}`);
 
-          const result = await response.json();
-
-          if (!response.ok) {
-            throw new Error(result.error || 'Erro desconhecido no servidor');
-          }
-
-          console.log('Sincronização Auth terminada via servidor.');
-        } catch (authErr: any) {
-          console.error('Erro sincronia Auth via servidor:', authErr);
-          authSyncFailed = true;
-          
-          if (authErr.message?.includes('email-already-in-use')) {
-            authSyncErrorDetail = ' (CPF já em uso no login)';
+          let secondaryApp;
+          if (getApps().some(app => app.name === 'SecondaryApp')) {
+            secondaryApp = getApp('SecondaryApp');
           } else {
-            authSyncErrorDetail = ' (Erro de comunicação com o servidor)';
+            secondaryApp = initializeApp(firebaseConfig, 'SecondaryApp');
           }
-          
-          setError(`Atenção: O sistema de login falhou${authSyncErrorDetail}. O cadastro NÃO será atualizado para evitar erros de acesso.`);
-          return; // STOP here if Auth failed, to avoid mismatch
+          const secondaryAuth = getAuth(secondaryApp);
+          await setPersistence(secondaryAuth, inMemoryPersistence);
+
+          try {
+            // 1. Login as the current user to be able to delete the account
+            console.log(`[ClientSync] Autenticando como usuário atual...`);
+            const userCred = await signInWithEmailAndPassword(secondaryAuth, oldEmail, oldPassword);
+            const userToDelete = userCred.user;
+
+            // 2. Delete the old account
+            console.log(`[ClientSync] Excluindo conta antiga...`);
+            await deleteUser(userToDelete);
+            
+            // 3. Create the new account
+            console.log(`[ClientSync] Criando nova conta com dados atualizados...`);
+            const newUserCred = await createUserWithEmailAndPassword(secondaryAuth, newEmail, trimmedId);
+            const newUid = newUserCred.user.uid;
+            
+            console.log(`[ClientSync] Sincronização concluída. Novo UID: ${newUid}`);
+
+            // If UID changed, we need to migrate the Firestore document
+            if (newUid !== selectedUser.uid) {
+              console.log(`[ClientSync] Migrando documento Firestore: ${selectedUser.uid} -> ${newUid}`);
+              
+              // Get all existing data
+              const userDocRef = doc(db, 'usuarios', selectedUser.uid);
+              const userSnapshot = await getDoc(userDocRef);
+              
+              if (userSnapshot.exists()) {
+                const currentData = userSnapshot.data();
+                
+                // Create new document
+                const newUserDocRef = doc(db, 'usuarios', newUid);
+                await setDoc(newUserDocRef, {
+                  ...currentData,
+                  uid: newUid,
+                  cpf: cleanCpf,
+                  email: newEmail,
+                  id: trimmedId,
+                  updatedAt: new Date().toISOString()
+                });
+                
+                // Delete old document
+                await deleteDoc(userDocRef);
+                console.log(`[ClientSync] Migração de documento concluída.`);
+                
+                // Update local state to reflect the change if needed, 
+                // but since we are closing the modal and refreshing, it might be enough.
+                // However, the 'usuarios' state might need update if we don't reload.
+              }
+            }
+
+            await signOut(secondaryAuth);
+          } catch (syncErr: any) {
+            console.error('[ClientSync] Falha durante o processo de sincronização:', syncErr);
+            
+            // Fallback: If user didn't exist in Auth, just try to create it
+            if (syncErr.code === 'auth/user-not-found' || syncErr.code === 'auth/invalid-credential' || syncErr.code === 'auth/wrong-password') {
+              console.log('[ClientSync] Usuário não encontrado ou senha inválida. Tentando apenas criar nova conta...');
+              try {
+                const newUserCred = await createUserWithEmailAndPassword(secondaryAuth, newEmail, trimmedId);
+                const newUid = newUserCred.user.uid;
+                
+                if (newUid !== selectedUser.uid) {
+                  const userDocRef = doc(db, 'usuarios', selectedUser.uid);
+                  const userSnapshot = await getDoc(userDocRef);
+                  if (userSnapshot.exists()) {
+                    const currentData = userSnapshot.data();
+                    await setDoc(doc(db, 'usuarios', newUid), {
+                      ...currentData,
+                      uid: newUid,
+                      cpf: cleanCpf,
+                      email: newEmail,
+                      id: trimmedId,
+                      updatedAt: new Date().toISOString()
+                    });
+                    await deleteDoc(userDocRef);
+                  }
+                }
+                await signOut(secondaryAuth);
+                console.log('[ClientSync] Nova conta criada com sucesso.');
+              } catch (createErr: any) {
+                if (createErr.code === 'auth/email-already-in-use') {
+                   // User might already have the new credentials? 
+                   // Or partial success. We proceed.
+                   console.warn('[ClientSync] Email já em uso. Prosseguindo.');
+                } else {
+                  throw createErr;
+                }
+              }
+            } else {
+              throw syncErr;
+            }
+          }
+        } catch (authErr: any) {
+          console.error('Erro sincronia Auth via cliente:', authErr);
+          setError(`Erro de Sincronia: ${authErr.message || 'Falha ao atualizar dados de acesso'}.`);
+          setLoading(false);
+          return;
         }
       }
 
@@ -976,16 +1168,18 @@ export default function AdminDashboard() {
 
       try {
         await setDoc(userRef, cleanData as any, { merge: true });
+        console.log('Firestore update successful');
       } catch (fsErr) {
         console.error('Erro ao salvar no Firestore:', fsErr);
         setError('Erro ao salvar os dados no banco de dados.');
+        setLoading(false);
         return;
       }
       
-      setSuccessMessage('Cadastro atualizado com sucesso!');
+      setLoading(false);
+      setSuccessMessage('As alterações foram salvas com sucesso no registro do usuário.');
       setIsSuccessModalOpen(true);
       window.scrollTo({ top: 0, behavior: 'smooth' });
-      console.log('Admin success modal triggered');
       setIsEditModalOpen(false);
     } catch (err: any) {
       console.error(err);
@@ -1038,6 +1232,21 @@ export default function AdminDashboard() {
     
     setLoading(true);
     try {
+      // Tries to also delete the Firebase Auth account
+      try {
+        const currentUser = auth.currentUser;
+        if (currentUser) {
+          const adminToken = await currentUser.getIdToken(true);
+          await fetch('/api/delete-auth', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ uid: userToDelete, adminToken })
+          });
+        }
+      } catch (authDelErr) {
+        console.warn('Erro ao excluir conta de acesso via servidor:', authDelErr);
+      }
+
       await deleteDoc(doc(db, 'usuarios', userToDelete));
       setUsuarios(usuarios.filter(u => u.uid !== userToDelete));
       setSuccess('Usuário excluído com sucesso!');
@@ -1055,6 +1264,13 @@ export default function AdminDashboard() {
     (u.cpf || '').replace(/\D/g, '').includes(searchTerm.replace(/\D/g, '')) ||
     (u.id || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const formatCpf = (cpf: string) => {
+    if (!cpf) return '';
+    const clean = cpf.replace(/\D/g, '');
+    if (clean.length !== 11) return cpf;
+    return `${clean.slice(0, 3)}.${clean.slice(3, 6)}.${clean.slice(6, 9)}-${clean.slice(9)}`;
+  };
 
   const getPublicUrl = (id: string) => {
     // Ensure we have a valid ID, fallback to window.location.origin if needed
@@ -1254,7 +1470,7 @@ export default function AdminDashboard() {
                         </div>
                       </td>
                       <td className="px-4 py-2">
-                        <div className="text-slate-600 font-bold text-xs">{u.cpf}</div>
+                        <div className="text-slate-600 font-bold text-xs">{formatCpf(u.cpf)}</div>
                         <div className="text-[9px] text-brand-blue font-black uppercase tracking-tighter italic font-display">{u.id}</div>
                       </td>
                       <td className="px-4 py-2">
@@ -1813,29 +2029,29 @@ export default function AdminDashboard() {
                 />
 
                 {/* Logo Text */}
-                <div className="absolute top-[4%] left-[5%] text-white font-black italic text-xl md:text-5xl uppercase z-10">
+                <div className="absolute top-[4%] left-[5%] text-white font-black italic text-[14px] md:text-5xl uppercase z-10 leading-none">
                   INFO+SAÚDE
                 </div>
 
                 {/* User Name (H1 style) */}
-                <div className="absolute top-[35%] left-[5%] w-[90%] text-left text-white font-black text-lg md:text-3xl z-10 drop-shadow-lg uppercase">
+                <div className="absolute top-[35%] left-[5%] w-[90%] text-left text-white font-black text-[12px] md:text-3xl z-10 drop-shadow-lg uppercase leading-tight">
                   {selectedUser.nome_completo}
                 </div>
 
                 {/* ID Field (H2 style) - Below Name */}
                 <div className="absolute top-[48%] left-[5%] w-[90%] flex items-center justify-start z-10">
-                  <span className="text-white font-bold text-sm md:text-xl italic font-display tracking-widest drop-shadow-md">
+                  <span className="text-white font-bold text-[10px] md:text-xl italic font-display tracking-widest drop-shadow-md">
                     ID: {selectedUser.id}
                   </span>
                 </div>
 
                 {/* Instructions */}
-                <div className="absolute bottom-[12%] left-[5%] w-[55%] text-white font-bold text-[10px] md:text-[13px] leading-tight z-10 drop-shadow-md">
+                <div className="absolute bottom-[12%] left-[5%] w-[55%] text-white font-bold text-[7px] md:text-[13px] leading-tight z-10 drop-shadow-md">
                   Esse é o seu cartão virtual. Com ele é possível acessar as suas informações de saúde através do site digitando o seu ID ou apontando a câmera do celular para o QR CODE.
                 </div>
 
                 {/* URL */}
-                <div className="absolute bottom-[5%] left-[5%] text-white font-black text-[11px] md:text-[14px] z-10">
+                <div className="absolute bottom-[5%] left-[5%] text-white font-black text-[8px] md:text-[14px] z-10">
                   www.infosaudemais.com.br
                 </div>
 
@@ -1991,17 +2207,55 @@ export default function AdminDashboard() {
               </div>
 
               {/* Attachments Section - Admin View */}
-              {selectedUser.anexos && selectedUser.anexos.length > 0 && (
-                <div className="space-y-5">
-                  <div className="flex items-center justify-between border-b-2 border-slate-100 pb-2">
-                    <h4 className="font-bold text-slate-900 uppercase tracking-tighter italic font-display text-lg">Documentos Anexos</h4>
+              <div className="space-y-5">
+                <div className="flex items-center justify-between border-b-2 border-slate-100 pb-2">
+                  <h4 className="font-bold text-slate-900 uppercase tracking-tighter italic font-display text-lg">Documentos Anexos</h4>
+                  {selectedUser.anexos && selectedUser.anexos.length > 0 && (
                     <button
                       onClick={handleDeleteAllAnexos}
                       className="text-[10px] font-bold text-red-400 hover:text-red-600 uppercase tracking-widest transition-colors flex items-center gap-1"
                     >
                       <Trash2 size={12} /> Excluir Todos
                     </button>
+                  )}
+                </div>
+
+                {/* Upload Buttons */}
+                <div className="grid grid-cols-2 gap-3">
+                  <label className="flex-1 bg-white border-2 border-dashed border-slate-200 p-4 rounded-2xl flex flex-col items-center justify-center gap-2 hover:border-blue-500 hover:bg-blue-50/30 transition-all cursor-pointer group animate-in fade-in zoom-in duration-300">
+                    <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <Upload size={20} />
+                    </div>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover:text-blue-600">Enviar Laudo</span>
+                    <input type="file" accept="image/*,application/pdf" onChange={(e) => handleAdminFileUpload(e, 'laudo', selectedUser)} className="hidden" />
+                  </label>
+                  <label className="flex-1 bg-white border-2 border-dashed border-slate-200 p-4 rounded-2xl flex flex-col items-center justify-center gap-2 hover:border-emerald-500 hover:bg-emerald-50/30 transition-all cursor-pointer group animate-in fade-in zoom-in duration-300 delay-75">
+                    <div className="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <Upload size={20} />
+                    </div>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover:text-emerald-600">Enviar Receita</span>
+                    <input type="file" accept="image/*,application/pdf" onChange={(e) => handleAdminFileUpload(e, 'receita', selectedUser)} className="hidden" />
+                  </label>
+                </div>
+
+                {uploading && (
+                  <div className="bg-slate-50 rounded-xl p-3 border border-slate-100 flex items-center gap-3 animate-in slide-in-from-top-2 duration-300">
+                    <div className="animate-spin text-blue-600 shrink-0">
+                      <Loader2 size={18} />
+                    </div>
+                    <div className="flex-1 space-y-1">
+                      <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest flex justify-between">
+                        <span>Enviando documento...</span>
+                        <span>{uploadProgress}%</span>
+                      </p>
+                      <div className="w-full bg-slate-200 h-1 rounded-full overflow-hidden">
+                        <div className="bg-blue-600 h-full transition-all duration-300" style={{ width: `${uploadProgress}%` }}></div>
+                      </div>
+                    </div>
                   </div>
+                )}
+
+                {selectedUser.anexos && selectedUser.anexos.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {selectedUser.anexos.map((anexo) => (
                       <div 
@@ -2046,8 +2300,13 @@ export default function AdminDashboard() {
                       </div>
                     ))}
                   </div>
-                </div>
-              )}
+                ) : (
+                  <div className="p-8 text-center bg-slate-50 rounded-3xl border-2 border-dashed border-slate-100">
+                    <FileText size={40} className="mx-auto text-slate-200 mb-3" />
+                    <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px]">Nenhum documento anexado ainda.</p>
+                  </div>
+                )}
+              </div>
 
               <div className="p-6 bg-brand-gradient rounded-[2rem] shadow-lg shadow-blue-100 flex items-center justify-between text-white relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -mr-12 -mt-12 blur-2xl"></div>
@@ -2386,9 +2645,9 @@ export default function AdminDashboard() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="flex-1 bg-slate-900 hover:bg-slate-800 text-white font-bold py-2 rounded-lg transition-all shadow-lg shadow-slate-200 uppercase tracking-widest italic font-display text-[10px] disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-[2] bg-brand-gradient text-white font-black py-4 rounded-xl transition-all shadow-xl shadow-blue-100 uppercase tracking-[0.2em] italic font-display text-xs disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.02] active:scale-95"
                 >
-                  {loading ? 'Salvando...' : 'Salvar Alterações'}
+                  {loading ? 'Sincronizando...' : 'Salvar Alterações'}
                 </button>
               </div>
             </form>
@@ -2402,7 +2661,7 @@ export default function AdminDashboard() {
             <div className="w-20 h-20 bg-green-50 text-green-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-green-100">
               <CheckCircle2 size={40} />
             </div>
-            <h3 className="text-2xl font-black text-slate-900 mb-2 tracking-tight uppercase italic font-display">Sucesso!</h3>
+            <h3 className="text-2xl font-black text-slate-900 mb-2 tracking-tight uppercase italic font-display">Registro Salvo</h3>
             <p className="text-slate-500 mb-8 font-medium">
               {successMessage}
             </p>

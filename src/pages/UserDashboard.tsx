@@ -4,7 +4,8 @@ import { db, auth } from '../firebase';
 import { Usuario, Anexo } from '../types';
 import Layout from '../components/Layout';
 import { useAuth } from '../App';
-import { Save, User, Heart, AlertTriangle, Pill, Phone, Calendar, CreditCard, CheckCircle2, ShieldAlert, Activity, HeartPulse, Printer, Download, Loader2, FileUp, FileText, Trash2, Paperclip, ExternalLink, Camera } from 'lucide-react';
+import { Save, User, Heart, AlertTriangle, Pill, Phone, Calendar, CreditCard, CheckCircle2, ShieldAlert, Activity, HeartPulse, Printer, Download, Loader2, FileUp, FileText, Trash2, Paperclip, ExternalLink, Camera, X } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 import { useNavigate } from 'react-router-dom';
 
 export default function UserDashboard() {
@@ -15,6 +16,7 @@ export default function UserDashboard() {
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [isVirtualCardModalOpen, setIsVirtualCardModalOpen] = useState(false);
   const [deleteConfirmAnexo, setDeleteConfirmAnexo] = useState<Anexo | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -352,6 +354,25 @@ export default function UserDashboard() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const getPublicUrl = (id: string) => {
+    return `${window.location.origin}/public-profile/${id}`;
+  };
+
+  const handlePrintVirtualCard = () => {
+    if (!userData) return;
+    
+    const publicUrl = getPublicUrl(userData.id || userData.uid);
+    const printUrl = `${publicUrl}?print=true`;
+    
+    const link = document.createElement('a');
+    link.href = printUrl;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   if (authLoading) {
@@ -848,6 +869,14 @@ export default function UserDashboard() {
             
             <button
               type="button"
+              onClick={() => setIsVirtualCardModalOpen(true)}
+              className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-6 sm:px-12 py-4 rounded-2xl shadow-xl shadow-indigo-200 transition-all active:scale-95 flex items-center justify-center gap-3 text-base sm:text-lg italic font-display uppercase tracking-widest"
+            >
+              <CreditCard size={22} /> MEU CARTÃO VIRTUAL
+            </button>
+
+            <button
+              type="button"
               onClick={() => {
                 navigate(`/public-profile/${userData.id || userData.uid}`);
               }}
@@ -869,6 +898,95 @@ export default function UserDashboard() {
           </div>
         </form>
       </div>
+
+      {/* Virtual Card Modal */}
+      {isVirtualCardModalOpen && userData && (
+        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md flex items-center justify-center z-[100] p-4 animate-in fade-in duration-500 no-print">
+          <div className="bg-white rounded-[2rem] w-full max-w-lg shadow-2xl overflow-hidden animate-in zoom-in-95 duration-500 border border-slate-100">
+            <div className="bg-brand-gradient p-6 flex justify-between items-center text-white">
+              <div className="flex items-center gap-3">
+                <div className="bg-white/20 p-2 rounded-xl">
+                  <CreditCard size={20} />
+                </div>
+                <h3 className="text-xl font-black italic font-display uppercase tracking-tighter">Meu Cartão Virtual</h3>
+              </div>
+              <button onClick={() => setIsVirtualCardModalOpen(false)} className="bg-white/20 hover:bg-white/30 p-2 rounded-xl transition-colors">
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="p-8 flex flex-col items-center">
+              {/* Card Preview Container */}
+              <div 
+                id="virtual-card-print"
+                className="relative w-full aspect-[1.58/1] rounded-2xl overflow-hidden shadow-2xl border border-slate-200 bg-brand-gradient"
+              >
+                {/* Background Image */}
+                <img 
+                  src="https://i.imgur.com/v8pY9pX.png" 
+                  alt="Layout Cartão" 
+                  className="absolute inset-0 w-full h-full object-cover z-0"
+                  referrerPolicy="no-referrer"
+                  crossOrigin="anonymous"
+                />
+
+                {/* Logo Text */}
+                <div className="absolute top-[4%] left-[5%] text-white font-black italic text-[16px] md:text-5xl uppercase z-10 leading-none">
+                  INFO+SAÚDE
+                </div>
+
+                {/* User Name */}
+                <div className="absolute top-[35%] left-[5%] w-[90%] text-left text-white font-black text-[12px] md:text-3xl z-10 drop-shadow-lg uppercase leading-tight">
+                  {userData.nome_completo}
+                </div>
+
+                {/* ID Field */}
+                <div className="absolute top-[48%] left-[5%] w-[90%] flex items-center justify-start z-10">
+                  <span className="text-white font-bold text-[10px] md:text-xl italic font-display tracking-widest drop-shadow-md">
+                    ID: {userData.id || userData.uid}
+                  </span>
+                </div>
+
+                {/* Instructions */}
+                <div className="absolute bottom-[12%] left-[5%] w-[55%] text-white font-bold text-[7px] md:text-[13px] leading-tight z-10 drop-shadow-md">
+                  Esse é o seu cartão virtual. Com ele é possível acessar as suas informações de saúde através do site digitando o seu ID ou apontando a câmera do celular para o QR CODE.
+                </div>
+
+                {/* URL */}
+                <div className="absolute bottom-[5%] left-[5%] text-white font-black text-[8px] md:text-[14px] z-10">
+                  www.infosaudemais.com.br
+                </div>
+
+                {/* QR Code */}
+                <div className="absolute bottom-[8%] right-[15.5%] w-[18.5%] aspect-square bg-white rounded-lg flex items-center justify-center p-1 z-10">
+                  <QRCodeSVG 
+                    value={getPublicUrl(userData.id || userData.uid)} 
+                    size={120} 
+                    level="H" 
+                    includeMargin={false}
+                    className="w-full h-full"
+                  />
+                </div>
+              </div>
+
+              <div className="mt-8 flex gap-3 w-full no-print">
+                <button 
+                  onClick={handlePrintVirtualCard}
+                  className="flex-1 bg-slate-900 text-white font-black py-4 rounded-xl hover:bg-slate-800 transition-all flex items-center justify-center gap-2 uppercase tracking-widest italic font-display shadow-xl shadow-slate-200 text-xs"
+                >
+                  <Printer size={18} /> Imprimir / PDF
+                </button>
+                <button 
+                  onClick={() => setIsVirtualCardModalOpen(false)}
+                  className="flex-1 bg-white text-slate-400 border-2 border-slate-100 font-black py-3 rounded-xl hover:bg-slate-50 transition-all uppercase tracking-widest italic font-display text-xs"
+                >
+                  Fechar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Delete Confirmation Modal */}
       {deleteConfirmAnexo && (
