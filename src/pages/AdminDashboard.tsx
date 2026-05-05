@@ -996,9 +996,11 @@ export default function AdminDashboard() {
       const trimmedId = formData.id.trim().toUpperCase();
       const cleanCpf = formData.cpf?.replace(/\D/g, '') || '';
       const oldCleanCpf = selectedUser.cpf?.replace(/\D/g, '') || '';
-      const userRef = doc(db, 'usuarios', selectedUser.uid);
       
-      console.log('Atualizando usuário:', selectedUser.uid, { ...formData, cpf: cleanCpf, id: trimmedId });
+      // Track the UID that will receive the final update (may change during migration)
+      let finalUserUid = selectedUser.uid;
+      
+      console.log('Atualizando usuário:', finalUserUid, { ...formData, cpf: cleanCpf, id: trimmedId });
       
       // If ID or CPF changed, check for duplications
       const idChanged = trimmedId !== selectedUser.id;
@@ -1072,8 +1074,11 @@ export default function AdminDashboard() {
             if (newUid !== selectedUser.uid) {
               console.log(`[ClientSync] Migrando documento Firestore: ${selectedUser.uid} -> ${newUid}`);
               
+              const oldUid = selectedUser.uid;
+              finalUserUid = newUid; // Update the UID for the final write
+              
               // Get all existing data
-              const userDocRef = doc(db, 'usuarios', selectedUser.uid);
+              const userDocRef = doc(db, 'usuarios', oldUid);
               const userSnapshot = await getDoc(userDocRef);
               
               if (userSnapshot.exists()) {
@@ -1093,10 +1098,6 @@ export default function AdminDashboard() {
                 // Delete old document
                 await deleteDoc(userDocRef);
                 console.log(`[ClientSync] Migração de documento concluída.`);
-                
-                // Update local state to reflect the change if needed, 
-                // but since we are closing the modal and refreshing, it might be enough.
-                // However, the 'usuarios' state might need update if we don't reload.
               }
             }
 
@@ -1112,7 +1113,10 @@ export default function AdminDashboard() {
                 const newUid = newUserCred.user.uid;
                 
                 if (newUid !== selectedUser.uid) {
-                  const userDocRef = doc(db, 'usuarios', selectedUser.uid);
+                  const oldUid = selectedUser.uid;
+                  finalUserUid = newUid; // Update the UID for the final write
+                  
+                  const userDocRef = doc(db, 'usuarios', oldUid);
                   const userSnapshot = await getDoc(userDocRef);
                   if (userSnapshot.exists()) {
                     const currentData = userSnapshot.data();
@@ -1167,8 +1171,9 @@ export default function AdminDashboard() {
       }, {} as Record<string, any>);
 
       try {
+        const userRef = doc(db, 'usuarios', finalUserUid);
         await setDoc(userRef, cleanData as any, { merge: true });
-        console.log('Firestore update successful');
+        console.log(`Firestore update successful on doc: ${finalUserUid}`);
       } catch (fsErr) {
         console.error('Erro ao salvar no Firestore:', fsErr);
         setError('Erro ao salvar os dados no banco de dados.');
